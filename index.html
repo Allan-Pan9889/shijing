@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>诗径 · 走到诗里</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{
+    --ink:#2b2620; --paper:#f4efe4; --paper2:#ece4d4;
+    --gold:#9a7b3f; --jade:#5a7d6a; --red:#9e4b3f;
+    --shadow:rgba(40,30,15,.18);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;font-family:"Songti SC","STSong","Noto Serif SC",serif;
+    background:var(--paper);color:var(--ink);overflow:hidden;}
+  #app{position:relative;height:100dvh;display:flex;flex-direction:column;}
+
+  /* 顶栏 */
+  header{padding:14px 18px 10px;text-align:center;background:linear-gradient(#f7f2e7,#efe7d6);
+    border-bottom:1px solid #ddd0b8;z-index:5;}
+  header h1{margin:0;font-size:20px;letter-spacing:6px;font-weight:600;
+    display:flex;align-items:baseline;justify-content:center;gap:12px;}
+  header h1 .slogan{font-size:11px;letter-spacing:3px;font-weight:400;color:var(--jade);
+    opacity:.78;border-left:1px solid #cdbf9f;padding-left:12px;}
+  header .sub{font-size:11px;color:#8a7d63;letter-spacing:2px;margin-top:3px;}
+  .trailbar{display:flex;justify-content:center;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .trailbar .tab{font-size:12px;letter-spacing:1px;color:#8a7d63;padding:4px 13px;
+    border:1px solid #d3c5a6;border-radius:20px;cursor:pointer;background:transparent;
+    font-family:inherit;transition:.2s;white-space:nowrap;}
+  .trailbar .tab.on{background:var(--jade);color:var(--paper);border-color:var(--jade);}
+
+  /* 地图区(真实地图 · 淡雅水墨底图) */
+  #map{flex:1;position:relative;overflow:hidden;background:var(--paper2);}
+  #leaflet{position:absolute;inset:0;width:100%;height:100%;background:#eee8db;}
+  /* 给底图叠一层暖色,统一到宣纸调 */
+  .leaflet-tile-pane{filter:sepia(.22) saturate(.85) brightness(1.03) contrast(.97);}
+  .leaflet-container{background:#e9e2d2;font-family:inherit;}
+  .leaflet-control-attribution{font-size:9px;background:rgba(244,239,228,.7);}
+  /* 诗径连线 */
+  .trail-line{stroke:#a8916a;stroke-width:3.5;stroke-dasharray:2 9;
+    stroke-linecap:round;opacity:.85;fill:none;}
+  /* 点位标记(DivIcon) */
+  .pin{position:relative;width:0;height:0;}
+  .pin .dot{position:absolute;left:-7px;top:-7px;width:14px;height:14px;border-radius:50%;
+    background:#fff;border:2.5px solid var(--jade);box-shadow:0 1px 4px var(--shadow);transition:.3s;}
+  .pin.visited .dot{background:var(--jade);}
+  .pin.active .dot{background:var(--red);border-color:var(--red);}
+  .pin .pulse{position:absolute;left:-7px;top:-7px;width:14px;height:14px;border-radius:50%;
+    background:var(--red);opacity:0;}
+  .pin.active .pulse{animation:ping .9s ease-out;}
+  @keyframes ping{0%{transform:scale(1);opacity:.5;}100%{transform:scale(4.5);opacity:0;}}
+  .pin .label{position:absolute;left:12px;top:-13px;white-space:nowrap;
+    text-shadow:0 1px 2px #f4efe4,0 0 3px #f4efe4;}
+  .pin .label .nm{font-size:12px;color:var(--ink);font-weight:600;display:block;line-height:1.2;}
+  .pin .label .er{font-size:9px;color:var(--gold);letter-spacing:.5px;display:block;}
+  /* 行者(当前位置) */
+  .walker-icon{position:relative;width:0;height:0;}
+  .walker-icon .wk{position:absolute;left:-6px;top:-6px;width:12px;height:12px;border-radius:50%;
+    background:var(--red);border:2.5px solid #fff;box-shadow:0 1px 3px var(--shadow);}
+  .walker-icon .wkr{position:absolute;left:-14px;top:-14px;width:28px;height:28px;border-radius:50%;
+    border:1.5px solid var(--red);opacity:.5;}
+
+  .controls{padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    background:linear-gradient(#efe7d6,#e7dcc6);border-top:1px solid #ddd0b8;
+    display:flex;gap:10px;align-items:center;z-index:5;}
+  .btn{flex:1;padding:12px;border:none;border-radius:30px;font-family:inherit;
+    font-size:15px;letter-spacing:2px;color:#fff;background:var(--jade);
+    box-shadow:0 2px 6px var(--shadow);cursor:pointer;}
+  .btn.ghost{background:transparent;color:var(--jade);border:1.5px solid var(--jade);
+    box-shadow:none;flex:0 0 auto;padding:12px 16px;}
+  .btn:active{transform:translateY(1px);}
+  .hint{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:600;
+    font-size:11px;color:#8a7d63;background:rgba(244,239,228,.85);
+    padding:4px 12px;border-radius:20px;letter-spacing:1px;white-space:nowrap;
+    box-shadow:0 1px 4px var(--shadow);}
+
+  /* 诗句弹层 */
+  .overlay{position:fixed;inset:0;background:rgba(30,24,14,.55);backdrop-filter:blur(3px);
+    display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;
+    transition:.4s;z-index:1200;}
+  .overlay.show{opacity:1;pointer-events:auto;}
+  .card{width:100%;max-width:480px;background:var(--paper);border-radius:22px 22px 0 0;
+    padding:22px 24px calc(26px + env(safe-area-inset-bottom));transform:translateY(40px);
+    transition:.4s;box-shadow:0 -6px 30px rgba(0,0,0,.3);max-height:86dvh;overflow-y:auto;}
+  .overlay.show .card{transform:translateY(0);}
+  .card .grip{width:42px;height:4px;border-radius:3px;background:#cdbf9f;margin:0 auto 16px;}
+  .card .place{text-align:center;font-size:13px;color:var(--jade);letter-spacing:3px;}
+  .card .place .sub{display:block;font-size:11px;color:#a99b7d;margin-top:3px;letter-spacing:1px;}
+  /* 时空标尺 */
+  .timescale{margin:18px 0 6px;text-align:center;}
+  .timescale .ts-row{display:flex;align-items:center;justify-content:center;gap:14px;}
+  .timescale .ts-year{font-size:54px;line-height:1;font-weight:700;color:var(--ink);
+    letter-spacing:2px;font-family:Georgia,"Songti SC",serif;}
+  .timescale .ts-suffix{font-size:20px;font-weight:400;color:#a99b7d;margin-left:2px;}
+  .timescale .ts-era{text-align:left;font-size:15px;color:var(--jade);line-height:1.5;letter-spacing:1px;}
+  .timescale .ts-era2{font-size:12px;color:#a99b7d;letter-spacing:1px;}
+  .timescale .ts-gap{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;}
+  .timescale .ts-line{height:1px;width:34px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+  .timescale .ts-ago{font-size:13px;color:var(--red);letter-spacing:2px;font-weight:600;white-space:nowrap;}
+  .timescale .ts-who{font-size:13px;color:#6b5f48;letter-spacing:2px;margin-top:10px;
+    font-style:italic;opacity:.92;}
+  .scene{font-size:13px;line-height:1.9;color:#6b5f48;background:var(--paper2);
+    border-radius:12px;padding:12px 14px;margin:14px 0 18px;}
+
+  .poem{border-top:1px dashed #d3c5a6;padding-top:18px;margin-top:18px;}
+  .poem:first-of-type{border-top:none;margin-top:0;padding-top:0;}
+  .poem .verse{font-size:21px;line-height:2.1;letter-spacing:2px;text-align:center;
+    font-weight:600;color:var(--ink);}
+  .poem .preface{font-size:12px;line-height:1.95;color:#7a6e54;background:#efe8d8;
+    border-left:2px solid #c9b88f;border-radius:0 8px 8px 0;padding:10px 12px;
+    margin-bottom:16px;text-indent:0;}
+  .poem .relic{font-size:12px;line-height:1.75;color:#8a6d3a;background:#f3ead4;
+    border-radius:8px;padding:8px 11px;margin-top:11px;}
+  .poem .date{text-align:center;font-size:11px;color:#a99b7d;letter-spacing:1px;margin-top:6px;}
+  .poem .relic-img{margin:16px 0 4px;cursor:zoom-in;}
+  .poem .relic-img img{width:100%;border-radius:8px;display:block;
+    box-shadow:0 2px 10px rgba(40,30,15,.22);background:#e9e0cc;}
+  .poem .relic-img figcaption{text-align:center;font-size:11px;color:#a99b7d;
+    margin-top:6px;letter-spacing:1px;}
+  .poem .meta{text-align:center;font-size:12px;color:var(--gold);margin-top:10px;letter-spacing:1px;}
+  .poem .badge{display:inline-block;font-size:10px;padding:1px 7px;border-radius:10px;
+    margin-left:6px;vertical-align:middle;letter-spacing:0;}
+  .badge.A{background:#e3efe6;color:#3c6b50;}
+  .badge.B{background:#eef0e0;color:#6b6a2e;}
+  .badge.C{background:#f0e6e2;color:#8a5048;}
+  .poem .vern{font-size:13px;line-height:1.85;color:#5b5040;margin-top:12px;
+    padding-left:12px;border-left:2px solid #d8c9a8;}
+  .poem .anno{font-size:12px;line-height:1.8;color:#8a7d63;margin-top:10px;}
+  .poem .anno b{color:var(--jade);font-weight:600;}
+  .poem .ref{font-size:11px;line-height:1.7;color:#a99b7d;margin-top:7px;font-style:normal;}
+  .close{position:sticky;bottom:-2px;display:block;width:100%;margin-top:22px;padding:13px;border:none;
+    background:var(--ink);color:var(--paper);border-radius:30px;font-family:inherit;
+    font-size:14px;letter-spacing:3px;cursor:pointer;
+    box-shadow:0 -14px 18px -6px var(--paper);}
+  /* 真迹灯箱 */
+  #lightbox{position:fixed;inset:0;background:rgba(20,16,10,.94);z-index:1300;
+    display:none;flex-direction:column;align-items:center;justify-content:center;cursor:zoom-out;}
+  #lightbox.show{display:flex;}
+  #lightbox .lb-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    display:flex;align-items:center;padding:20px 0;}
+  #lightbox .lb-scroll img{height:min(70vh,520px);max-height:78vh;width:auto;
+    margin:0 auto;border-radius:4px;box-shadow:0 4px 30px rgba(0,0,0,.6);}
+  #lightbox .lb-tip{color:#c9bda0;font-size:12px;letter-spacing:2px;padding:12px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>诗径<span class="slogan">走到诗里</span></h1>
+    <div class="sub" id="trailSub">古龙井 · 风篁岭诗径</div>
+    <div class="trailbar" id="trailbar"></div>
+  </header>
+
+  <div id="map">
+    <div class="hint" id="hint">点「模拟漫步」沿径前行，或「真实定位」实地体验</div>
+    <div id="leaflet"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="walkBtn">模拟漫步</button>
+    <button class="btn ghost" id="gpsBtn">真实定位</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="card" id="card"></div>
+</div>
+
+<script>
+let DATA=null, walking=false, walkIdx=-1, watchId=null, visited=new Set();
+const TRIGGER_FACTOR=1.0; // 进入 radius 内触发
+const NOW_YEAR=new Date().getFullYear(); // 用于实时计算"距今"年差
+
+// Leaflet 地图对象
+let lmap=null, markers=[], trailLine=null, walkerMarker=null;
+
+// ── WGS-84 → GCJ-02 坐标转换(火星坐标偏移) ──
+// 数据层坐标统一存 WGS-84(GPS/距离/围栏都用真值);仅在画到高德底图时转 GCJ-02
+function outOfChina(lat,lng){return !(lng>=72.004&&lng<=137.8347&&lat>=0.8293&&lat<=55.8271);}
+function tfLat(x,y){let r=-100+2*x+3*y+0.2*y*y+0.1*x*y+0.2*Math.sqrt(Math.abs(x));
+  r+=(20*Math.sin(6*x*Math.PI)+20*Math.sin(2*x*Math.PI))*2/3;
+  r+=(20*Math.sin(y*Math.PI)+40*Math.sin(y/3*Math.PI))*2/3;
+  r+=(160*Math.sin(y/12*Math.PI)+320*Math.sin(y*Math.PI/30))*2/3;return r;}
+function tfLng(x,y){let r=300+x+2*y+0.1*x*x+0.1*x*y+0.1*Math.sqrt(Math.abs(x));
+  r+=(20*Math.sin(6*x*Math.PI)+20*Math.sin(2*x*Math.PI))*2/3;
+  r+=(20*Math.sin(x*Math.PI)+40*Math.sin(x/3*Math.PI))*2/3;
+  r+=(150*Math.sin(x/12*Math.PI)+300*Math.sin(x/30*Math.PI))*2/3;return r;}
+function gcj(lat,lng){
+  if(outOfChina(lat,lng)) return [lat,lng];
+  const a=6378245.0, ee=0.00669342162296594323;
+  let dLat=tfLat(lng-105,lat-35), dLng=tfLng(lng-105,lat-35);
+  const rLat=lat/180*Math.PI;
+  let m=Math.sin(rLat); m=1-ee*m*m;
+  const sm=Math.sqrt(m);
+  dLat=(dLat*180)/((a*(1-ee))/(m*sm)*Math.PI);
+  dLng=(dLng*180)/(a/sm*Math.cos(rLat)*Math.PI);
+  return [lat+dLat, lng+dLng];
+}
+// 点位显示坐标。底图(CartoDB)为 WGS-84 真坐标,直接用数据层真值,无需偏移。
+// 注:gcj()/tfLat 等火星坐标转换函数保留备用——若日后切回高德等 GCJ-02 底图可复用。
+function gpt(p){return [p.lat,p.lng];}
+
+function haversine(a,b,c,d){
+  const R=6371000,t=Math.PI/180;
+  const dLat=(c-a)*t,dLng=(d-b)*t;
+  const x=Math.sin(dLat/2)**2+Math.cos(a*t)*Math.cos(c*t)*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(x));
+}
+
+// Catmull-Rom 样条:把点位串成顺滑弧线(seg=每段插值点数)
+function catmullRom(pts, seg){
+  if(pts.length<3) return pts;
+  const out=[];
+  const P=[pts[0], ...pts, pts[pts.length-1]]; // 两端各复制一个,保证首尾经过
+  for(let i=1;i<P.length-2;i++){
+    const p0=P[i-1],p1=P[i],p2=P[i+1],p3=P[i+2];
+    for(let j=0;j<seg;j++){
+      const t=j/seg, t2=t*t, t3=t2*t;
+      const lat=0.5*((2*p1[0])+(-p0[0]+p2[0])*t+(2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2+(-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t3);
+      const lng=0.5*((2*p1[1])+(-p0[1]+p2[1])*t+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3);
+      out.push([lat,lng]);
+    }
+  }
+  out.push(pts[pts.length-1]);
+  return out;
+}
+
+function buildMap(){
+  const pts=DATA.points;
+  // 首次创建地图
+  if(!lmap){
+    lmap=L.map('leaflet',{zoomControl:false,attributionControl:true});
+    L.control.zoom({position:'bottomright'}).addTo(lmap);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',{
+      maxZoom:19, subdomains:'abcd',
+      attribution:'&copy; OpenStreetMap, &copy; CARTO'
+    }).addTo(lmap);
+  }
+  // 清掉上一条径的图层
+  markers.forEach(m=>lmap.removeLayer(m)); markers=[];
+  if(trailLine){lmap.removeLayer(trailLine);trailLine=null;}
+  if(walkerMarker){lmap.removeLayer(walkerMarker);walkerMarker=null;}
+
+  // 诗径连线(高德显示坐标 + Catmull-Rom 平滑成自然弧线)
+  const latlngs=pts.map(p=>gpt(p));
+  const smooth = latlngs.length>=3 ? catmullRom(latlngs, 16) : latlngs;
+  trailLine=L.polyline(smooth,{className:'trail-line'}).addTo(lmap);
+
+  // 点位标记
+  pts.forEach((p,i)=>{
+    const eraTxt=p.year?`<span class="er">${(p.dynasty_short||(p.era||'').split(' · ')[0])} · ${p.year}</span>`:'';
+    const icon=L.divIcon({className:'',iconSize:[0,0],html:
+      `<div class="pin" id="pin-${i}"><div class="pulse"></div><div class="dot"></div>
+        <div class="label"><span class="nm">${p.name}</span>${eraTxt}</div></div>`});
+    const m=L.marker(gpt(p),{icon}).addTo(lmap);
+    m.on('click',()=>arrive(i,true));
+    markers.push(m);
+  });
+
+  // 视野自适应到全部点位
+  lmap.fitBounds(latlngs, {padding:[55,55], maxZoom:16});
+  setTimeout(()=>lmap.invalidateSize(),120); // 修正容器尺寸
+  window.lmap=lmap; window.markers=markers; // 暴露便于调试/校准
+}
+
+function pinEl(i){const m=markers[i]; return m&&m._icon?m._icon.querySelector('.pin'):null;}
+
+function moveWalker(lat,lng){
+  const g=[lat,lng]; // 底图为 WGS-84,GPS 返回的也是 WGS-84,直接用真值
+  if(!walkerMarker){
+    const icon=L.divIcon({className:'',iconSize:[0,0],
+      html:`<div class="walker-icon"><div class="wkr"></div><div class="wk"></div></div>`});
+    walkerMarker=L.marker(g,{icon,zIndexOffset:1000}).addTo(lmap);
+  }else{
+    walkerMarker.setLatLng(g);
+  }
+}
+
+// 检查是否进入任一围栏
+function checkGeofence(lat,lng){
+  let best=-1,bestD=1e9;
+  DATA.points.forEach((p,i)=>{
+    const dist=haversine(lat,lng,p.lat,p.lng);
+    if(dist<p.radius*TRIGGER_FACTOR && dist<bestD){best=i;bestD=dist;}
+  });
+  if(best>=0 && !visited.has(best+"_open")) arrive(best,false);
+}
+
+function arrive(i,manual){
+  const pin=pinEl(i);
+  document.querySelectorAll('.pin').forEach(n=>n.classList.remove('active'));
+  if(pin){
+    pin.classList.add('active','visited');
+    // 重触发脉冲动画
+    pin.querySelector('.pulse').style.animation='none';
+    void pin.offsetWidth;
+    pin.querySelector('.pulse').style.animation='';
+  }
+  // 地图平移到该点位(高德显示坐标)
+  if(lmap) lmap.panTo(gpt(DATA.points[i]), {animate:true,duration:.6});
+  visited.add(i+"_open");
+  if(navigator.vibrate) navigator.vibrate([12,40,12]);
+  showCard(DATA.points[i]);
+}
+
+function showCard(p){
+  const c=document.getElementById('card');
+  let poems=p.poems.map(po=>`
+    <div class="poem">
+      ${po.preface?`<div class="preface">${po.preface}</div>`:''}
+      <div class="verse">${po.text}</div>
+      <div class="meta">——〔${po.dynasty}〕${po.author}《${po.source.replace(/[《》]/g,'')}》
+        <span class="badge ${po.credit}">${({A:'确切',B:'相关',C:'意境'})[po.credit]}</span></div>
+      ${po.date?`<div class="date">${po.date}</div>`:''}
+      ${po.relic_image?`<figure class="relic-img" onclick="zoomImg('${po.relic_image}')">
+        <img src="${po.relic_image}" alt="苏轼真迹" loading="lazy">
+        <figcaption>苏轼亲笔真迹 · 轻触放大</figcaption></figure>`:''}
+      <div class="vern">${po.vernacular}</div>
+      <div class="anno"><b>考据 · </b>${po.annotation}</div>
+      ${po.relic?`<div class="relic">🖌 ${po.relic}</div>`:''}
+      ${po.ref?`<div class="ref">出处 · ${po.ref}</div>`:''}
+    </div>`).join('');
+  c.innerHTML=`<div class="grip"></div>
+    <div class="place">${p.name}<span class="sub">${p.subtitle}</span></div>
+    ${p.year?`<div class="timescale">
+      <div class="ts-row">
+        <div class="ts-year">${p.year}<span class="ts-suffix">年</span></div>
+        <div class="ts-era">${(p.era||'').split(' · ')[0]}<br><span class="ts-era2">${(p.era||'').split(' · ')[1]||''}</span></div>
+      </div>
+      <div class="ts-gap"><span class="ts-line"></span><span class="ts-ago">距今 ${NOW_YEAR-p.year} 年</span><span class="ts-line"></span></div>
+      ${p.era_who?`<div class="ts-who">${p.era_who}</div>`:''}
+    </div>`:''}
+    <div class="scene">${p.scene_hint}</div>
+    ${poems}
+    <button class="close" onclick="hideCard()">收 起</button>`;
+  document.getElementById('overlay').classList.add('show');
+}
+function hideCard(){document.getElementById('overlay').classList.remove('show');}
+document.getElementById('overlay').onclick=e=>{if(e.target.id==='overlay')hideCard();};
+
+// 真迹放大灯箱(支持横向看长卷)
+function zoomImg(src){
+  let lb=document.getElementById('lightbox');
+  if(!lb){
+    lb=document.createElement('div');lb.id='lightbox';
+    lb.onclick=()=>lb.classList.remove('show');
+    document.body.appendChild(lb);
+  }
+  lb.innerHTML=`<div class="lb-scroll"><img src="${src}" alt="真迹"></div>
+    <div class="lb-tip">横向滑动看长卷 · 轻触关闭</div>`;
+  lb.classList.add('show');
+}
+
+// 模拟漫步:沿点位插值前进
+function simulateWalk(){
+  if(walking) return;
+  walking=true;walkIdx=0;
+  const btn=document.getElementById('walkBtn');btn.textContent='漫步中…';
+  const pts=DATA.points;
+  let seg=0,t=0;
+  const timer=setInterval(()=>{
+    if(seg>=pts.length-1){
+      // 抵达终点最后一个
+      moveWalker(pts[pts.length-1].lat,pts[pts.length-1].lng);
+      checkGeofence(pts[pts.length-1].lat,pts[pts.length-1].lng);
+      clearInterval(timer);walking=false;btn.textContent='重新漫步';
+      visited=new Set([...visited].filter(v=>!v.endsWith('_open')));
+      return;
+    }
+    const a=pts[seg],b=pts[seg+1];
+    const lat=a.lat+(b.lat-a.lat)*t, lng=a.lng+(b.lng-a.lng)*t;
+    moveWalker(lat,lng);
+    checkGeofence(lat,lng);
+    t+=0.34;
+    if(t>=1){t=0;seg++;}
+  },950);
+}
+
+// 真实 GPS
+function realGPS(){
+  if(!navigator.geolocation){document.getElementById('hint').textContent='此设备不支持定位';return;}
+  document.getElementById('hint').textContent='定位中…(需到现场才会触发诗句)';
+  if(watchId)navigator.geolocation.clearWatch(watchId);
+  watchId=navigator.geolocation.watchPosition(pos=>{
+    const {latitude,longitude}=pos.coords;
+    document.getElementById('hint').textContent='已定位 · 走近点位即触发';
+    moveWalker(latitude,longitude);
+    checkGeofence(latitude,longitude);
+  },err=>{
+    document.getElementById('hint').textContent='定位失败:'+err.message+'(可先用模拟漫步)';
+  },{enableHighAccuracy:true,maximumAge:3000});
+}
+
+document.getElementById('walkBtn').onclick=simulateWalk;
+document.getElementById('gpsBtn').onclick=realGPS;
+
+// 多条诗径
+const TRAILS=[
+  {file:'data/poems.json',        sub:'古龙井 · 风篁岭诗径'},
+  {file:'data/trail-gushan.json', sub:'孤山 · 白堤诗径'}
+];
+let curTrail=0;
+
+function renderTrailbar(){
+  const bar=document.getElementById('trailbar');
+  bar.innerHTML=TRAILS.map((t,i)=>
+    `<button class="tab ${i===curTrail?'on':''}" onclick="switchTrail(${i})">${t.sub.split(' · ').pop()}</button>`
+  ).join('');
+}
+function switchTrail(i){
+  if(i===curTrail && DATA) return;
+  curTrail=i;
+  // 重置漫步/定位状态
+  walking=false; walkIdx=-1; visited=new Set();
+  if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;}
+  hideCard();
+  loadTrail();
+}
+function loadTrail(){
+  const t=TRAILS[curTrail];
+  renderTrailbar();
+  fetch(t.file).then(r=>r.json()).then(d=>{
+    DATA=d;
+    document.getElementById('trailSub').textContent=(d.meta&&d.meta.trail_name)?d.meta.trail_name.replace(/^诗径\s*·\s*/,''):t.sub;
+    buildMap();
+    document.getElementById('hint').textContent='点「模拟漫步」沿径前行，或「真实定位」实地体验';
+  }).catch(e=>{document.getElementById('hint').textContent='数据加载失败:'+e;});
+}
+loadTrail();
+
+</script>
+</body>
+</html>
