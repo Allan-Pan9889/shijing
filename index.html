@@ -55,6 +55,20 @@
     text-shadow:0 1px 2px #f4efe4,0 0 3px #f4efe4;}
   .pin .label .nm{font-size:12px;color:var(--ink);font-weight:600;display:block;line-height:1.2;}
   .pin .label .er{font-size:9px;color:var(--gold);letter-spacing:.5px;display:block;}
+  /* 坐标可信度：待测点(estimate)用空心虚线圈 + 波浪角标；已证点(osm/field)保持实心 */
+  .pin.est .dot{background:transparent;border-style:dashed;border-color:var(--gold);}
+  .pin.est.visited .dot{background:rgba(122,106,79,.35);}
+  .pin .cred{position:absolute;left:5px;top:-13px;font-size:9px;font-weight:700;
+    color:var(--gold);text-shadow:0 0 3px #f4efe4;display:none;}
+  .pin.est .cred{display:block;}
+  /* 图例 */
+  #legend{position:absolute;left:12px;bottom:12px;z-index:1200;background:rgba(244,239,228,.92);
+    border:1px solid var(--gold);border-radius:8px;padding:7px 10px;font-size:10.5px;
+    color:var(--ink);line-height:1.7;box-shadow:0 2px 8px var(--shadow);}
+  #legend .li{display:flex;align-items:center;gap:6px;}
+  #legend .sw{width:13px;height:13px;border-radius:50%;flex:none;}
+  #legend .sw.ok{background:#fff;border:2.5px solid var(--jade);}
+  #legend .sw.es{background:transparent;border:2.5px dashed var(--gold);}
   /* 行者(当前位置) */
   .walker-icon{position:relative;width:0;height:0;}
   .walker-icon .wk{position:absolute;left:-6px;top:-6px;width:12px;height:12px;border-radius:50%;
@@ -156,6 +170,10 @@
   <div id="map">
     <div class="hint" id="hint">点「模拟漫步」沿径前行，或「真实定位」实地体验</div>
     <div id="leaflet"></div>
+    <div id="legend">
+      <div class="li"><span class="sw ok"></span>坐标已核验</div>
+      <div class="li"><span class="sw es"></span>坐标待实测 <span style="color:var(--gold);font-weight:700;">~</span></div>
+    </div>
   </div>
 
   <div class="controls">
@@ -251,8 +269,9 @@ function buildMap(){
   // 点位标记
   pts.forEach((p,i)=>{
     const eraTxt=p.year?`<span class="er">${(p.dynasty_short||(p.era||'').split(' · ')[0])} · ${p.year}</span>`:'';
+    const isEst = (p.coord_source==='estimate' || !p.coord_source);
     const icon=L.divIcon({className:'',iconSize:[0,0],html:
-      `<div class="pin" id="pin-${i}"><div class="pulse"></div><div class="dot"></div>
+      `<div class="pin ${isEst?'est':''}" id="pin-${i}"><div class="pulse"></div><div class="dot"></div><span class="cred" title="坐标待实地校准">~</span>
         <div class="label"><span class="nm">${p.name}</span>${eraTxt}</div></div>`});
     const m=L.marker(gpt(p),{icon}).addTo(lmap);
     m.on('click',()=>arrive(i,true));
