@@ -148,6 +148,41 @@
     background:var(--ink);color:var(--paper);border-radius:30px;font-family:inherit;
     font-size:14px;letter-spacing:3px;cursor:pointer;
     box-shadow:0 -14px 18px -6px var(--paper);}
+  /* 卡片内实地校准 */
+  .calib-row{margin-top:18px;text-align:center;}
+  .calib{font-family:inherit;font-size:12.5px;letter-spacing:1px;padding:9px 16px;cursor:pointer;
+    border-radius:22px;background:transparent;color:var(--jade);border:1.5px dashed var(--jade);}
+  .calib.todo{color:var(--gold);border-color:var(--gold);border-style:solid;font-weight:600;
+    background:rgba(154,123,63,.08);}
+  /* 校准面板(覆盖在卡片之上的迷你打点台) */
+  #calib{position:fixed;inset:0;z-index:1400;display:none;align-items:flex-end;justify-content:center;
+    background:rgba(30,24,14,.5);backdrop-filter:blur(3px);}
+  #calib.show{display:flex;}
+  .calib-panel{width:100%;max-width:480px;background:var(--paper);border-radius:22px 22px 0 0;
+    padding:20px 20px 26px;max-height:88vh;overflow-y:auto;box-shadow:0 -8px 30px rgba(0,0,0,.3);}
+  .calib-panel h3{margin:0 0 4px;text-align:center;font-size:15px;color:var(--ink);letter-spacing:2px;}
+  .calib-panel .cp-sub{text-align:center;font-size:11px;color:var(--gold);margin-bottom:16px;letter-spacing:1px;}
+  .cp-live{background:var(--paper2);border-radius:12px;padding:12px;text-align:center;margin-bottom:10px;}
+  .cp-live .coord{font-size:16px;font-weight:700;color:var(--ink);letter-spacing:.5px;}
+  .cp-live .acc{display:inline-block;margin-top:5px;font-size:11px;padding:2px 9px;border-radius:10px;color:#fff;}
+  .acc-g{background:var(--jade);} .acc-m{background:#b8954a;} .acc-b{background:var(--red);}
+  .cp-info{font-size:11px;color:#6b5f48;text-align:center;margin:-2px 0 12px;line-height:1.6;}
+  .cp-cmp{font-size:12px;text-align:center;margin:10px 0;color:var(--ink);}
+  .cp-cmp b{color:var(--jade);}
+  .cp-btns{display:flex;gap:9px;margin-bottom:10px;}
+  .cp-btns button{flex:1;font-family:inherit;font-size:13px;padding:11px;border-radius:22px;cursor:pointer;
+    border:1.5px solid var(--jade);background:transparent;color:var(--jade);letter-spacing:1px;}
+  .cp-btns button.solid{background:var(--jade);color:#fff;border-color:var(--jade);}
+  .cp-btns button:disabled{opacity:.4;cursor:default;}
+  .cp-json{width:100%;height:120px;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    border:1px solid var(--gold);border-radius:10px;padding:9px;background:#fbf8f0;color:var(--ink);
+    resize:none;margin-top:6px;}
+  .cp-close{display:block;width:100%;margin-top:14px;padding:12px;border:none;border-radius:24px;
+    background:var(--ink);color:var(--paper);font-family:inherit;font-size:13px;letter-spacing:2px;cursor:pointer;}
+  .cp-tip{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);z-index:1500;
+    background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:20px;font-size:12px;
+    opacity:0;transition:.3s;pointer-events:none;}
+  .cp-tip.show{opacity:.95;}
   /* 真迹灯箱 */
   #lightbox{position:fixed;inset:0;background:rgba(20,16,10,.94);z-index:1300;
     display:none;flex-direction:column;align-items:center;justify-content:center;cursor:zoom-out;}
@@ -185,6 +220,32 @@
 <div class="overlay" id="overlay">
   <div class="card" id="card"></div>
 </div>
+
+<!-- 卡片内实地校准面板 -->
+<div id="calib">
+  <div class="calib-panel">
+    <h3 id="cpTitle">实地校准</h3>
+    <div class="cp-sub" id="cpSub"></div>
+    <div class="cp-live">
+      <div class="coord" id="cpCoord">—</div>
+      <span class="acc acc-b" id="cpAcc">未定位</span>
+    </div>
+    <div class="cp-info" id="cpInfo">点「开始定位」授权 GPS。站定后采 8–15 个样本再定点,精度收敛到 ≤10m 最佳。</div>
+    <div class="cp-cmp" id="cpCmp"></div>
+    <div class="cp-btns">
+      <button id="cpStart">▶ 开始定位</button>
+      <button id="cpFix" class="solid" disabled>📍 定点(取中位数)</button>
+    </div>
+    <label style="font-size:11px;color:#6b5f48;">生成的 JSON 坐标字段(复制后替换数据文件中该点)</label>
+    <textarea class="cp-json" id="cpJson" readonly placeholder="定点后自动生成…"></textarea>
+    <div class="cp-btns" style="margin-top:8px;">
+      <button id="cpCopy">⧉ 复制 JSON</button>
+      <button id="cpDown" class="">⤓ 存为文件</button>
+    </div>
+    <button class="cp-close" id="cpCloseBtn">关 闭</button>
+  </div>
+</div>
+<div class="cp-tip" id="cpTip"></div>
 
 <script>
 let DATA=null, walking=false, walkIdx=-1, watchId=null, visited=new Set();
@@ -353,6 +414,10 @@ function showCard(p){
     </div>`:''}
     <div class="scene">${p.scene_hint}</div>
     ${poems}
+    <div class="calib-row">
+      <button class="calib ${(p.coord_source==='estimate'||!p.coord_source)?'todo':''}"
+        onclick="openCalib('${p.id}')">📍 实地校准此点位${(p.coord_source==='estimate'||!p.coord_source)?' · 坐标待实测':''}</button>
+    </div>
     <button class="close" onclick="hideCard()">收 起</button>`;
   document.getElementById('overlay').classList.add('show');
 }
@@ -448,6 +513,95 @@ function loadTrail(){
   }).catch(e=>{document.getElementById('hint').textContent='数据加载失败:'+e;});
 }
 loadTrail();
+
+/* ===== 卡片内实地校准(从 survey.html 内联核心能力) ===== */
+let cpWatch=null, cpSamples=[], cpPoint=null, cpFixMarker=null, cpFix=null;
+const cpEl=id=>document.getElementById(id);
+function cpToast(m){const t=cpEl('cpTip');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800);}
+function cpMedian(a){const s=[...a].sort((x,y)=>x-y);const m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function cpAccCls(a){return a<=10?'acc-g':a<=25?'acc-m':'acc-b';}
+
+// 从卡片点开:带入当前点位的 id/name/radius/现存坐标
+function openCalib(id){
+  cpPoint = DATA.points.find(p=>p.id===id);
+  if(!cpPoint){cpToast('未找到点位');return;}
+  cpEl('cpTitle').textContent='实地校准 · '+cpPoint.name;
+  const srcTxt=(cpPoint.coord_source==='estimate'||!cpPoint.coord_source)?'当前为估算坐标,待实测':'当前已核验('+cpPoint.coord_source+')';
+  cpEl('cpSub').textContent=`${cpPoint.id} · 半径${cpPoint.radius}m · ${srcTxt}`;
+  cpEl('cpCoord').textContent='—'; cpEl('cpAcc').textContent='未定位'; cpEl('cpAcc').className='acc acc-b';
+  cpEl('cpCmp').textContent=''; cpEl('cpJson').value=''; cpEl('cpFix').disabled=true;
+  cpEl('cpInfo').textContent='点「开始定位」授权 GPS。站定后采 8–15 个样本再定点,精度收敛到 ≤10m 最佳。';
+  cpSamples=[]; cpFix=null;
+  cpEl('calib').classList.add('show');
+}
+function closeCalib(){
+  if(cpWatch!==null){navigator.geolocation.clearWatch(cpWatch);cpWatch=null;}
+  cpEl('cpStart').textContent='▶ 开始定位';
+  cpEl('calib').classList.remove('show');
+}
+cpEl('cpCloseBtn').onclick=closeCalib;
+cpEl('calib').onclick=e=>{if(e.target.id==='calib')closeCalib();};
+
+cpEl('cpStart').onclick=()=>{
+  if(!navigator.geolocation){cpToast('此设备不支持定位');return;}
+  if(cpWatch!==null){navigator.geolocation.clearWatch(cpWatch);cpWatch=null;cpEl('cpStart').textContent='▶ 开始定位';return;}
+  cpSamples=[]; cpEl('cpStart').textContent='⏸ 停止定位';
+  cpWatch=navigator.geolocation.watchPosition(pos=>{
+    const {latitude:lat,longitude:lng,accuracy:acc}=pos.coords;
+    cpSamples.push({lat,lng,acc}); if(cpSamples.length>40)cpSamples.shift();
+    cpEl('cpCoord').textContent=lat.toFixed(6)+', '+lng.toFixed(6);
+    cpEl('cpAcc').textContent='±'+acc.toFixed(0)+'m'; cpEl('cpAcc').className='acc '+cpAccCls(acc);
+    cpEl('cpFix').disabled=cpSamples.length<3;
+    const good=cpSamples.filter(s=>s.acc<=15).length;
+    cpEl('cpInfo').textContent=acc<=10
+      ? `精度良好(${acc.toFixed(0)}m),已采 ${cpSamples.length} 个,可定点。`
+      : `精度 ${acc.toFixed(0)}m 偏大,静止等待收敛(已采 ${cpSamples.length},其中 ${good} 个≤15m)。`;
+    // 实时与当前存储坐标比距离
+    if(cpPoint){const d=haversine(lat,lng,cpPoint.lat,cpPoint.lng);
+      cpEl('cpCmp').innerHTML=`距当前存储坐标 <b>${d.toFixed(0)}m</b>`;}
+  },err=>{cpToast('定位失败:'+err.message);cpEl('cpStart').textContent='▶ 开始定位';cpWatch=null;},
+  {enableHighAccuracy:true,maximumAge:0,timeout:15000});
+};
+
+cpEl('cpFix').onclick=()=>{
+  if(cpSamples.length<3){cpToast('样本太少');return;}
+  let use=cpSamples.filter(s=>s.acc<=15);
+  if(use.length<3) use=[...cpSamples].sort((a,b)=>a.acc-b.acc).slice(0,Math.max(3,cpSamples.length>>1));
+  const flat=cpMedian(use.map(s=>s.lat)), flng=cpMedian(use.map(s=>s.lng));
+  const bestAcc=Math.min(...use.map(s=>s.acc));
+  cpFix={lat:flat,lng:flng,acc:bestAcc};
+  // 地图上标出定点结果
+  if(cpFixMarker) lmap.removeLayer(cpFixMarker);
+  cpFixMarker=L.circleMarker([flat,flng],{radius:8,color:'#fff',weight:3,fillColor:'#9e4b3f',fillOpacity:1})
+    .addTo(lmap).bindTooltip('校准定点',{direction:'top'});
+  const d=haversine(flat,flng,cpPoint.lat,cpPoint.lng);
+  cpEl('cpCmp').innerHTML=`定点完成 · 距原坐标偏移 <b>${d.toFixed(0)}m</b>(精度~${bestAcc.toFixed(0)}m)`;
+  // 生成可直接替换的 JSON 坐标字段
+  const obj={
+    id:cpPoint.id, name:cpPoint.name,
+    lat:+flat.toFixed(6), lng:+flng.toFixed(6),
+    coord_system:"WGS-84",
+    coord_source:"field-"+new Date().toISOString().slice(0,7),
+    coord_accuracy_m:+bestAcc.toFixed(0),
+    radius:cpPoint.radius,
+    radius_verified:true
+  };
+  cpEl('cpJson').value=JSON.stringify(obj,null,2);
+  cpToast(`已定点(取 ${use.length} 样本中位数)`);
+};
+
+cpEl('cpCopy').onclick=async()=>{
+  const t=cpEl('cpJson').value; if(!t){cpToast('先定点');return;}
+  try{await navigator.clipboard.writeText(t);cpToast('已复制到剪贴板');}
+  catch(e){cpEl('cpJson').select();document.execCommand('copy');cpToast('已复制');}
+};
+cpEl('cpDown').onclick=()=>{
+  const t=cpEl('cpJson').value; if(!t){cpToast('先定点');return;}
+  const blob=new Blob([t],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`calib-${cpPoint.id}-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();URL.revokeObjectURL(a.href);cpToast('已存为文件');
+};
 
 </script>
 </body>
