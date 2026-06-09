@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>诗径 · 孤山白堤 — 解说短片</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; background: #0a0a0a; height: 100%; overflow: hidden; font-family: -apple-system, sans-serif; }
+  /* 预览容器：占满窗口并居中，舞台用 JS 等比缩放贴合 */
+  #fit { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  #root { flex: 0 0 auto; box-shadow: 0 30px 80px rgba(0,0,0,0.55); border-radius: 4px; overflow: hidden; transform-origin: center center; }
+  * { box-sizing: border-box; }
+</style>
+</head>
+<body>
+<div id="fit"><div id="root"></div></div>
+<script>
+  // 录制/seek 模式下保持 1:1 原始像素（截图清晰）；普通预览自动缩放贴合窗口
+  if (new URLSearchParams(location.search).has('rec')) window.__recording = true;
+  (function () {
+    var REC = window.__recording === true || window.__seekRender === true;
+    function fit() {
+      var root = document.getElementById('root');
+      if (!root) return;
+      if (REC) { root.style.transform = 'none'; return; }
+      var pad = 24;
+      // 按 root 真实内容尺寸算（含底部播放控件栏），先清零 transform 量真实尺寸
+      root.style.transform = 'none';
+      var cw = root.offsetWidth || 1920;
+      var ch = root.offsetHeight || 1080;
+      var s = Math.min((window.innerWidth - pad) / cw, (window.innerHeight - pad) / ch);
+      s = Math.min(s, 1); // 不放大，只缩小
+      root.style.transform = 'scale(' + s + ')';
+    }
+    window.addEventListener('resize', fit);
+    // 舞台挂载后尺寸才确定，轮询几次直到 root 有尺寸
+    var n = 0; var iv = setInterval(function () { fit(); if (++n > 40) clearInterval(iv); }, 100);
+    document.addEventListener('DOMContentLoaded', fit);
+  })();
+</script>
+<script type="text/babel">
+// ════════════════ TIMELINE (inline) ════════════════
+const TIMELINE = {
+  "title": "诗径 · 孤山白堤",
+  "voice": null,
+  "speed": 1,
+  "gap": 0.45,
+  "totalDuration": 106.512,
+  "scenes": [
+    {
+      "id": "kaichang",
+      "start": 0,
+      "end": 7.416,
+      "duration": 7.416,
+      "audio": "audio/kaichang.mp3",
+      "text": "走到诗里。\n一条堤，从南朝走到清末。\n一千四百年的人，都在这里留过字。",
+      "chunks": [
+        {
+          "text": "走到诗里。",
+          "start": 0,
+          "end": 1.248,
+          "absoluteStart": 0,
+          "absoluteEnd": 1.248
+        },
+        {
+          "text": "一条堤，从南朝走到清末。\n一千四百年的人，都在这里留过字。",
+          "start": 1.248,
+          "end": 7.416,
+          "absoluteStart": 1.248,
+          "absoluteEnd": 7.416
+        }
+      ],
+      "cues": [
+        {
+          "id": "slogan",
+          "offset": 1.248,
+          "absoluteTime": 1.248
+        }
+      ]
+    },
+    {
+      "id": "duanqiao",
+      "start": 7.8660000000000005,
+      "end": 20.082,
+      "duration": 12.216,
+      "audio": "audio/duanqiao.mp3",
+      "text": "你站在断桥头。\n整片西湖，铺在眼前。\n往西的这道长堤，是白居易走过的路。\n一千二百年前的春天，他也从这里入湖。",
+      "chunks": [
+        {
+          "text": "你站在断桥头。",
+          "start": 0,
+          "end": 1.488,
+          "absoluteStart": 7.8660000000000005,
+          "absoluteEnd": 9.354000000000001
+        },
+        {
+          "text": "整片西湖，铺在眼前。\n往西的这道长堤，",
+          "start": 1.488,
+          "end": 6.125624999999999,
+          "absoluteStart": 9.354000000000001,
+          "absoluteEnd": 13.991624999999999
+        },
+        {
+          "text": "是白居易走过的路。\n一千二百年前的春天，他也从这里入湖。",
+          "start": 6.125624999999999,
+          "end": 12.221625,
+          "absoluteStart": 13.991624999999999,
+          "absoluteEnd": 20.087625
+        }
+      ],
+      "cues": [
+        {
+          "id": "hu",
+          "offset": 1.488,
+          "absoluteTime": 9.354000000000001
+        },
+        {
+          "id": "bai",
+          "offset": 6.125624999999999,
+          "absoluteTime": 13.991624999999999
+        }
+      ]
+    },
+    {
+      "id": "baidi",
+      "start": 20.532,
+      "end": 34.284,
+      "duration": 13.752,
+      "audio": "audio/baidi.mp3",
+      "text": "最爱湖东行不足，绿杨阴里白沙堤。\n他在杭州做刺史，疏浚西湖，修堤蓄水。\n后人感念他，就把这道堤，认作了他的名字。",
+      "chunks": [
+        {
+          "text": "最爱湖东行不足，",
+          "start": 0,
+          "end": 1.68,
+          "absoluteStart": 20.532,
+          "absoluteEnd": 22.212
+        },
+        {
+          "text": "绿杨阴里白沙堤。\n他在杭州做刺史，疏浚西湖，修堤蓄水。\n后人感念他，",
+          "start": 1.68,
+          "end": 10.421625,
+          "absoluteStart": 22.212,
+          "absoluteEnd": 30.953625000000002
+        },
+        {
+          "text": "就把这道堤，认作了他的名字。",
+          "start": 10.421625,
+          "end": 13.757625,
+          "absoluteStart": 30.953625000000002,
+          "absoluteEnd": 34.289625
+        }
+      ],
+      "cues": [
+        {
+          "id": "shaba",
+          "offset": 1.68,
+          "absoluteTime": 22.212
+        },
+        {
+          "id": "name",
+          "offset": 10.421625,
+          "absoluteTime": 30.953625000000002
+        }
+      ]
+    },
+    {
+      "id": "pinghu",
+      "start": 34.734,
+      "end": 47.334,
+      "duration": 12.6,
+      "audio": "audio/pinghu.mp3",
+      "text": "孤山寺北贾亭西，水面初平云脚低。\n几处早莺争暖树，谁家新燕啄春泥。\n你望出去的这片湖，和他写下的，是同一片。",
+      "chunks": [
+        {
+          "text": "孤山寺北贾亭西，",
+          "start": 0,
+          "end": 1.872,
+          "absoluteStart": 34.734,
+          "absoluteEnd": 36.606
+        },
+        {
+          "text": "水面初平云脚低。\n几处早莺争暖树，谁家新燕啄春泥。\n你望出去的这片湖，和他写下的，是同一片。",
+          "start": 1.872,
+          "end": 12.6,
+          "absoluteStart": 36.606,
+          "absoluteEnd": 47.334
+        }
+      ],
+      "cues": [
+        {
+          "id": "shuimian",
+          "offset": 1.872,
+          "absoluteTime": 36.606
+        }
+      ]
+    },
+    {
+      "id": "fanghe",
+      "start": 47.784000000000006,
+      "end": 65.52000000000001,
+      "duration": 17.736,
+      "audio": "audio/fanghe.mp3",
+      "text": "再往西，是孤山北麓。\n北宋的林逋，在这里隐居了二十年。\n不娶，不仕，种梅，养鹤。\n疏影横斜水清浅，暗香浮动月黄昏——\n咏梅的千古绝唱，就写在这座山上。",
+      "chunks": [
+        {
+          "text": "再往西，是孤山北麓。",
+          "start": 0,
+          "end": 2.688,
+          "absoluteStart": 47.784000000000006,
+          "absoluteEnd": 50.47200000000001
+        },
+        {
+          "text": "北宋的林逋，在这里隐居了二十年。\n不娶，不仕，种梅，养鹤。",
+          "start": 2.688,
+          "end": 10.056000000000001,
+          "absoluteStart": 50.47200000000001,
+          "absoluteEnd": 57.84
+        },
+        {
+          "text": "疏影横斜水清浅，暗香浮动月黄昏——\n咏梅的千古绝唱，就写在这座山上。",
+          "start": 10.056000000000001,
+          "end": 17.736,
+          "absoluteStart": 57.84,
+          "absoluteEnd": 65.52000000000001
+        }
+      ],
+      "cues": [
+        {
+          "id": "linbu",
+          "offset": 2.688,
+          "absoluteTime": 50.47200000000001
+        },
+        {
+          "id": "shuying",
+          "offset": 10.056000000000001,
+          "absoluteTime": 57.84
+        }
+      ]
+    },
+    {
+      "id": "xiling",
+      "start": 65.97000000000001,
+      "end": 81.57000000000001,
+      "duration": 15.6,
+      "audio": "audio/xiling.mp3",
+      "text": "西泠桥畔。\n南朝的名妓苏小小，长眠在这里。\n妾乘油壁车，郎乘青骢马。\n何处结同心？西陵松柏下。\n一千五百年后，她的名字，还在桥边。",
+      "chunks": [
+        {
+          "text": "西泠桥畔。",
+          "start": 0,
+          "end": 1.488,
+          "absoluteStart": 65.97000000000001,
+          "absoluteEnd": 67.45800000000001
+        },
+        {
+          "text": "南朝的名妓苏小小，长眠在这里。\n妾乘油壁车，郎乘青骢马。",
+          "start": 1.488,
+          "end": 8.136,
+          "absoluteStart": 67.45800000000001,
+          "absoluteEnd": 74.10600000000001
+        },
+        {
+          "text": "何处结同心？西陵松柏下。\n一千五百年后，她的名字，还在桥边。",
+          "start": 8.136,
+          "end": 15.6,
+          "absoluteStart": 74.10600000000001,
+          "absoluteEnd": 81.57000000000001
+        }
+      ],
+      "cues": [
+        {
+          "id": "susu",
+          "offset": 1.488,
+          "absoluteTime": 67.45800000000001
+        },
+        {
+          "id": "tongxin",
+          "offset": 8.136,
+          "absoluteTime": 74.10600000000001
+        }
+      ]
+    },
+    {
+      "id": "qiujin",
+      "start": 82.02000000000001,
+      "end": 94.33200000000001,
+      "duration": 12.312,
+      "audio": "audio/qiujin.mp3",
+      "text": "桥的南边，是鉴湖女侠秋瑾的归处。\n她生前愿，埋骨西泠。\n秋风秋雨愁煞人——\n相传，是她临刑前留下的最后一句。",
+      "chunks": [
+        {
+          "text": "桥的南边，是鉴湖女侠秋瑾的归处。\n她生前愿，埋骨西泠。",
+          "start": 0,
+          "end": 6.432,
+          "absoluteStart": 82.02000000000001,
+          "absoluteEnd": 88.45200000000001
+        },
+        {
+          "text": "秋风秋雨愁煞人——\n相传，是她临刑前留下的最后一句。",
+          "start": 6.432,
+          "end": 12.312000000000001,
+          "absoluteStart": 88.45200000000001,
+          "absoluteEnd": 94.33200000000001
+        }
+      ],
+      "cues": [
+        {
+          "id": "juebi",
+          "offset": 6.432,
+          "absoluteTime": 88.45200000000001
+        }
+      ]
+    },
+    {
+      "id": "shouwei",
+      "start": 94.78200000000001,
+      "end": 106.15800000000002,
+      "duration": 11.376,
+      "audio": "audio/shouwei.mp3",
+      "text": "南朝，唐，北宋，清。\n一道平堤，走了一千四百年。\n而你，刚刚也走了一遍。\n走到诗里。",
+      "chunks": [
+        {
+          "text": "南朝，唐，北宋，清。",
+          "start": 0,
+          "end": 3.528,
+          "absoluteStart": 94.78200000000001,
+          "absoluteEnd": 98.31000000000002
+        },
+        {
+          "text": "一道平堤，走了一千四百年。\n而你，刚刚也走了一遍。\n走到诗里。",
+          "start": 3.528,
+          "end": 11.376,
+          "absoluteStart": 98.31000000000002,
+          "absoluteEnd": 106.15800000000002
+        }
+      ],
+      "cues": [
+        {
+          "id": "end",
+          "offset": 3.528,
+          "absoluteTime": 98.31000000000002
+        }
+      ]
+    }
+  ],
+  "voiceover": "voiceover.mp3"
+};
+
+// ════════════════ NarrationStage lib (verbatim from skill) ════════════════
+const NarrationStageLib = (() => {
+  const NarrationContext = React.createContext({});
+  function NarrationStage({ timeline, audioSrc, width = 1920, height = 1080, background = '#0e0e0e', controls = true, children }) {
+    const audioRef = React.useRef(null);
+    const [time, setTime] = React.useState(0);
+    const [playing, setPlaying] = React.useState(false);
+    const recording = typeof window !== 'undefined' && window.__recording === true;
+    React.useEffect(() => { if (typeof window !== 'undefined') { window.__totalDuration = timeline.totalDuration; window.__ready = true; } }, [timeline.totalDuration]);
+    React.useEffect(() => {
+      let raf;
+      if (recording) {
+        let startedAt = null;
+        const tick = (now) => {
+          if (startedAt === null) startedAt = now;
+          setTime(Math.min((now - startedAt) / 1000, timeline.totalDuration));
+          raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+        if (typeof window !== 'undefined') window.__seek = (t) => { startedAt = performance.now() - t * 1000; setTime(t); };
+      } else {
+        const tick = () => {
+          if (audioRef.current && !audioRef.current.paused) setTime(audioRef.current.currentTime);
+          raf = requestAnimationFrame(tick);
+        };
+        tick();
+      }
+      return () => cancelAnimationFrame(raf);
+    }, [recording, timeline.totalDuration]);
+    const currentScene = React.useMemo(() => {
+      if (!timeline.scenes) return null;
+      for (let i = 0; i < timeline.scenes.length; i++) {
+        const s = timeline.scenes[i]; const next = timeline.scenes[i + 1];
+        if (time >= s.start && (!next || time < next.start)) return s;
+      }
+      return timeline.scenes[0];
+    }, [time, timeline.scenes]);
+    const sceneTime = currentScene ? Math.max(0, time - currentScene.start) : 0;
+    const allCues = React.useMemo(() => { const m = {}; for (const s of timeline.scenes || []) for (const c of s.cues || []) m[c.id] = c; return m; }, [timeline.scenes]);
+    const isCueTriggered = React.useCallback(id => { const c = allCues[id]; return c ? time >= c.absoluteTime : false; }, [allCues, time]);
+    const cueProgress = React.useCallback((id, ramp = 0.6) => { const c = allCues[id]; if (!c) return 0; const dt = time - c.absoluteTime; if (dt <= 0) return 0; if (dt >= ramp) return 1; return dt / ramp; }, [allCues, time]);
+    const ctx = { time, scene: currentScene, sceneTime, isCueTriggered, cueProgress, timeline };
+    return (
+      <NarrationContext.Provider value={ctx}>
+        <div style={{ position: 'relative', width, height, background, overflow: 'hidden', color: '#2c2620' }}>{children}</div>
+        {!recording && <audio ref={audioRef} src={audioSrc} preload="auto" onEnded={() => setPlaying(false)} />}
+        {!recording && controls && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#1a1a1a', color: '#ddd', fontFamily: 'monospace', fontSize: 13, width, boxSizing: 'border-box' }}>
+            <button onClick={() => { if (audioRef.current.paused) { audioRef.current.play(); setPlaying(true); } else { audioRef.current.pause(); setPlaying(false); } }} style={{ padding: '6px 14px', background: '#fff', color: '#000', border: 0, borderRadius: 4, cursor: 'pointer', fontWeight: 600 }}>{playing ? '❚❚ Pause' : '▶ Play'}</button>
+            <input type="range" min={0} max={timeline.totalDuration} step={0.01} value={time} onChange={e => { const t = parseFloat(e.target.value); audioRef.current.currentTime = t; setTime(t); }} style={{ flex: 1 }} />
+            <span style={{ minWidth: 130, textAlign: 'right' }}>{time.toFixed(2)} / {timeline.totalDuration.toFixed(2)}s</span>
+            <span style={{ padding: '4px 10px', background: '#2a2a2a', borderRadius: 4, minWidth: 120, textAlign: 'center' }}>{currentScene ? currentScene.id : '—'}</span>
+          </div>
+        )}
+      </NarrationContext.Provider>
+    );
+  }
+  function useNarration() { return React.useContext(NarrationContext); }
+  function useSceneFade(sceneId, fadeIn = 0.5, fadeOut = 0.5) {
+    const { time, timeline } = React.useContext(NarrationContext);
+    if (!timeline) return 0;
+    const s = timeline.scenes.find(x => x.id === sceneId);
+    if (!s) return 0;
+    const inT = (time - s.start) / fadeIn;
+    const outT = (s.end - time) / fadeOut;
+    return Math.max(0, Math.min(1, Math.min(inT, outT)));
+  }
+  function Cue({ id, ramp = 0.6, children }) {
+    const { isCueTriggered, cueProgress } = React.useContext(NarrationContext);
+    return children(isCueTriggered(id), cueProgress(id, ramp));
+  }
+  return { NarrationStage, Cue, useNarration, useSceneFade };
+})();
+const { NarrationStage, Cue, useNarration, useSceneFade } = NarrationStageLib;
+
+// ════════════════ 设计 token (宣纸 · 水墨 · 朱砂) ════════════════
+const C = {
+  paper: '#f1e8d6', paperDeep: '#e7dcc4', paperWash: '#dfd2b6',
+  ink: '#2b2620', inkSoft: '#4d463a', inkMute: '#9c907a',
+  seal: '#a8403a', sealSoft: '#bf5a4e', dai: '#5d6b66', gold: '#b0884a',
+};
+const F = {
+  display: '"Noto Serif SC", "Songti SC", STSong, serif',
+  body: '"Noto Sans SC", -apple-system, sans-serif',
+  mono: '"JetBrains Mono", Menlo, monospace',
+};
+const expoOut = t => t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+const lerp = (a, b, t) => a + (b - a) * t;
+
+// ════════════════ 宣纸背景 + 远山墨晕 (持续漂移) ════════════════
+const PaperBg = () => {
+  // 背景保持静止：移动的大面积径向渐变在 H.264 编码下会产生 banding/抖动
+  // （HTML 实时渲染丝滑，但视频编码器对缓慢移动的平滑渐变处理很差）。
+  // 漂移幅度本就极小、视觉近乎静止，去掉后观感无差别、却消除了 MP4 抖动。
+  return (
+    <>
+      <div style={{ position: 'absolute', inset: -60,
+        background: `radial-gradient(ellipse 1500px 900px at 50% 42%, ${C.paper} 0%, ${C.paperDeep} 62%, ${C.paperWash} 100%)`,
+        pointerEvents: 'none' }} />
+      {/* 远山墨晕 — 极淡，静止 */}
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 300, height: 360, pointerEvents: 'none',
+        opacity: 0.06,
+        background: `radial-gradient(ellipse 900px 300px at 30% 100%, ${C.dai}, transparent 70%), radial-gradient(ellipse 1100px 340px at 72% 100%, ${C.ink}, transparent 72%)` }} />
+      {/* 纸纹 grain */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.5, mixBlendMode: 'multiply',
+        backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.5 0 0 0 0 0.4 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
+    </>
+  );
+};
+
+// ════════════════ HERO: 长堤 + 行者 (跨全片持续运动) ════════════════
+// 行者从东(断桥)一路西行，走过 1400 年。已走过的堤身描朱砂，涟漪持续扩散。
+const DIKE_Y = 700;
+const STATIONS = {
+  kaichang: { x: 6 },
+  duanqiao: { x: 13, place: '断桥', year: '823', era: '唐' },
+  baidi:    { x: 30, place: '白堤', year: '823', era: '唐' },
+  pinghu:   { x: 45, place: '孤山寺', year: '823', era: '唐' },
+  fanghe:   { x: 62, place: '放鹤亭', year: '1020', era: '北宋' },
+  xiling:   { x: 80, place: '西泠桥', year: '490', era: '南朝齐' },
+  qiujin:   { x: 90, place: '秋瑾墓', year: '1907', era: '清' },
+  shouwei:  { x: 90 },
+};
+const SCENE_ORDER = ['kaichang','duanqiao','baidi','pinghu','fanghe','xiling','qiujin','shouwei'];
+const MARKERS = ['duanqiao','baidi','pinghu','fanghe','xiling','qiujin'];
+
+const HeroDike = () => {
+  const { time, scene } = useNarration();
+  if (!scene) return null;
+  const idx = SCENE_ORDER.indexOf(scene.id);
+  const prevId = idx > 0 ? SCENE_ORDER[idx - 1] : scene.id;
+  const from = STATIONS[prevId].x, to = STATIONS[scene.id].x;
+  const transitionDur = Math.min(2.4, scene.duration * 0.55);
+  const t = expoOut(Math.min(1, Math.max(0, (time - scene.start) / transitionDur)));
+  const walkerXpct = lerp(from, to, t);
+  const walkerPx = walkerXpct / 100 * 1920;
+  const bob = Math.sin(time * 1.2) * 1.2; // 行走起伏（降幅降频，避免逐帧抖动）
+  const wy = DIKE_Y + bob;
+
+  // 涟漪：连续平滑扩散，用 sin 包络淡入淡出，避免 %取模 的硬跳回造成闪帧
+  const RIP = 3.6; // 单次涟漪周期(秒)
+  const ph1 = (time % RIP) / RIP;        // 0→1
+  const ph2 = ((time + RIP / 2) % RIP) / RIP;
+  const r1 = ph1 * 70;
+  const r2 = ph2 * 70;
+  const rop1 = 0.4 * Math.sin(ph1 * Math.PI); // 两端淡入淡出，循环点 opacity=0 无跳变
+  const rop2 = 0.4 * Math.sin(ph2 * Math.PI);
+
+  return (
+    <svg width="1920" height="1080" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+      {/* 堤身 — 未走过部分：淡墨 */}
+      <path d="M 80 700 Q 520 684 960 700 T 1840 700" fill="none" stroke={C.ink} strokeOpacity="0.16" strokeWidth="2.5" strokeLinecap="round" />
+      {/* 已走过 — 朱砂描红，用 clip 随行者生长 */}
+      <defs>
+        <clipPath id="trav"><rect x="0" y="640" width={walkerPx} height="120" /></clipPath>
+      </defs>
+      <path d="M 80 700 Q 520 684 960 700 T 1840 700" fill="none" stroke={C.seal} strokeOpacity="0.5" strokeWidth="3" strokeLinecap="round" clipPath="url(#trav)" />
+      {/* 站点标记 */}
+      {MARKERS.map(id => {
+        const sx = STATIONS[id].x / 100 * 1920;
+        const passed = walkerPx >= sx - 4;
+        const isCur = scene.id === id;
+        return (
+          <g key={id}>
+            <circle cx={sx} cy={700} r={isCur ? 7 : 4.5}
+              fill={passed ? C.seal : 'none'} stroke={passed ? C.seal : C.inkMute}
+              strokeWidth="1.5" opacity={passed ? 0.85 : 0.4} />
+            <text x={sx} y={736} textAnchor="middle"
+              fontFamily={F.body} fontSize="15" letterSpacing="2"
+              fill={isCur ? C.ink : C.inkMute}
+              opacity={passed ? (isCur ? 1 : 0.55) : 0.3}
+              style={{ fontWeight: isCur ? 600 : 400 }}>{STATIONS[id].place}</text>
+          </g>
+        );
+      })}
+      {/* 行者涟漪 */}
+      {idx >= 1 && idx <= 6 && <>
+        <circle cx={walkerPx} cy={wy} r={r1} fill="none" stroke={C.seal} strokeWidth="1.5" opacity={rop1} />
+        <circle cx={walkerPx} cy={wy} r={r2} fill="none" stroke={C.seal} strokeWidth="1.5" opacity={rop2} />
+        <circle cx={walkerPx} cy={wy} r="9" fill={C.seal} />
+        <circle cx={walkerPx} cy={wy} r="9" fill="none" stroke={C.paper} strokeWidth="2.5" />
+      </>}
+    </svg>
+  );
+};
+
+// 年份徽标：跟随行者，数字随站点跳动（呼应「时间不是线性的」）
+const YearBadge = () => {
+  const { time, scene } = useNarration();
+  if (!scene) return null;
+  const st = STATIONS[scene.id];
+  if (!st.year) return null;
+  const idx = SCENE_ORDER.indexOf(scene.id);
+  const prevId = idx > 0 ? SCENE_ORDER[idx - 1] : scene.id;
+  const from = STATIONS[prevId].x, to = st.x;
+  const transitionDur = Math.min(2.4, scene.duration * 0.55);
+  const t = expoOut(Math.min(1, Math.max(0, (time - scene.start) / transitionDur)));
+  const xpct = lerp(from, to, t);
+  const op = useSceneFade(scene.id, 0.6, 0.45);
+  return (
+    <div style={{ position: 'absolute', left: `${xpct}%`, top: 770, transform: 'translateX(-50%)', textAlign: 'center', opacity: op, pointerEvents: 'none' }}>
+      <div style={{ fontFamily: F.mono, fontSize: 30, fontWeight: 500, color: C.seal, letterSpacing: '0.04em', lineHeight: 1 }}>{st.year}</div>
+      <div style={{ fontFamily: F.body, fontSize: 14, color: C.inkMute, letterSpacing: '0.18em', marginTop: 6 }}>{st.era}</div>
+    </div>
+  );
+};
+
+// ════════════════ 竖排诗句 reveal ════════════════
+// 古诗竖排，从右到左；按 cue 逐句以墨色升起
+const VPoem = ({ lines, op }) => (
+  <div style={{ position: 'absolute', top: 130, left: 0, right: 0, display: 'flex', flexDirection: 'row-reverse', justifyContent: 'center', gap: 30, opacity: op, pointerEvents: 'none' }}>
+    {lines.map((ln, i) => (
+      <Cue key={i} id={ln.cue}>{(trig, p) => (
+        <div style={{
+          writingMode: 'vertical-rl', fontFamily: F.display, fontSize: ln.size || 62, fontWeight: 500,
+          color: C.ink, letterSpacing: '0.12em', lineHeight: 1.0,
+          opacity: p, transform: `translateY(${(1 - p) * -26}px)`,
+          textShadow: '0 1px 2px rgba(241,232,214,0.8)',
+          WebkitMaskImage: `linear-gradient(to bottom, rgba(0,0,0,1) ${p*100}%, rgba(0,0,0,0) ${Math.min(100, p*100+12)}%)`,
+        }}>{ln.text}</div>
+      )}</Cue>
+    ))}
+  </div>
+);
+
+// 标题（地名·朝代）+ 作者朱砂印
+const Kicker = ({ place, sub, op }) => (
+  <div style={{ position: 'absolute', top: 70, left: 0, right: 0, textAlign: 'center', opacity: op, pointerEvents: 'none' }}>
+    <span style={{ fontFamily: F.display, fontSize: 26, fontWeight: 600, color: C.inkSoft, letterSpacing: '0.3em' }}>{place}</span>
+    <span style={{ fontFamily: F.body, fontSize: 15, color: C.inkMute, letterSpacing: '0.22em', marginLeft: 18 }}>{sub}</span>
+  </div>
+);
+const Seal = ({ author, source, op, p = 1, left = '64%' }) => (
+  <div style={{ position: 'absolute', top: 470, left, transform: 'translateX(-50%)', textAlign: 'center', opacity: op * p, pointerEvents: 'none' }}>
+    <div style={{ display: 'inline-block', padding: '8px 10px', border: `2px solid ${C.seal}`, borderRadius: 3, background: 'rgba(168,64,58,0.06)' }}>
+      <div style={{ writingMode: 'vertical-rl', fontFamily: F.display, fontSize: 22, fontWeight: 600, color: C.seal, letterSpacing: '0.16em' }}>{author}</div>
+    </div>
+    {source && <div style={{ fontFamily: F.body, fontSize: 14, color: C.inkMute, marginTop: 10, letterSpacing: '0.12em' }}>{source}</div>}
+  </div>
+);
+
+// ════════════════ 各段 ════════════════
+const SceneKaichang = () => {
+  const op = useSceneFade('kaichang', 0.5, 0.5);
+  return (
+    <Cue id="slogan">{(t, p) => (
+      <div style={{ position: 'absolute', top: 250, left: 0, right: 0, textAlign: 'center', opacity: op }}>
+        <div style={{ fontFamily: F.display, fontSize: 130, fontWeight: 700, color: C.ink, letterSpacing: '0.18em', lineHeight: 1 }}>走到诗里</div>
+        <div style={{ marginTop: 40, opacity: p, transform: `translateY(${(1-p)*16}px)` }}>
+          <div style={{ fontFamily: F.body, fontSize: 27, color: C.inkSoft, letterSpacing: '0.16em' }}>一条堤，从南朝走到清末</div>
+          <div style={{ fontFamily: F.body, fontSize: 19, color: C.inkMute, letterSpacing: '0.14em', marginTop: 16 }}>孤山 · 白堤诗径</div>
+        </div>
+      </div>
+    )}</Cue>
+  );
+};
+
+const SceneDuanqiao = () => {
+  const op = useSceneFade('duanqiao', 0.6, 0.45);
+  return (<>
+    <Kicker place="断桥" sub="白堤东起 · 一湖入怀" op={op} />
+    <VPoem op={op} lines={[
+      { text: '乱花渐欲迷人眼', cue: 'hu' },
+      { text: '浅草才能没马蹄', cue: 'bai' },
+    ]} />
+    <Cue id="bai">{(t, p) => <Seal author="白居易" source="《钱塘湖春行》· 唐" op={op} p={p} />}</Cue>
+  </>);
+};
+
+const SceneBaidi = () => {
+  const op = useSceneFade('baidi', 0.6, 0.45);
+  return (<>
+    <Kicker place="白沙堤" sub="绿杨阴里 · 行不足处" op={op} />
+    <VPoem op={op} lines={[
+      { text: '最爱湖东行不足', cue: 'shaba' },
+      { text: '绿杨阴里白沙堤', cue: 'name' },
+    ]} />
+    <Cue id="name">{(t, p) => <Seal author="白居易" source="疏浚西湖 · 后人名其堤" op={op} p={p} />}</Cue>
+  </>);
+};
+
+const ScenePinghu = () => {
+  const op = useSceneFade('pinghu', 0.6, 0.45);
+  return (<>
+    <Kicker place="孤山寺" sub="水面初平 · 云脚低垂" op={op} />
+    <VPoem op={op} lines={[
+      { text: '孤山寺北贾亭西', cue: 'shuimian' },
+      { text: '水面初平云脚低', cue: 'shuimian' },
+    ]} />
+    <Cue id="shuimian">{(t, p) => <Seal author="白居易" source="《钱塘湖春行》首句" op={op} p={p} />}</Cue>
+  </>);
+};
+
+const SceneFanghe = () => {
+  const op = useSceneFade('fanghe', 0.6, 0.45);
+  return (<>
+    <Kicker place="放鹤亭" sub="梅妻鹤子 · 隐居二十年" op={op} />
+    <VPoem op={op} lines={[
+      { text: '疏影横斜水清浅', cue: 'linbu' },
+      { text: '暗香浮动月黄昏', cue: 'shuying' },
+    ]} />
+    <Cue id="shuying">{(t, p) => <Seal author="林逋" source="《山园小梅》· 北宋" op={op} p={p} />}</Cue>
+  </>);
+};
+
+const SceneXiling = () => {
+  const op = useSceneFade('xiling', 0.6, 0.45);
+  return (<>
+    <Kicker place="西泠桥" sub="油壁车 · 西陵松柏下" op={op} />
+    <VPoem op={op} lines={[
+      { text: '妾乘油壁车', cue: 'susu', size: 56 },
+      { text: '郎乘青骢马', cue: 'susu', size: 56 },
+      { text: '何处结同心', cue: 'tongxin', size: 56 },
+      { text: '西陵松柏下', cue: 'tongxin', size: 56 },
+    ]} />
+    <Cue id="tongxin">{(t, p) => <Seal author="苏小小歌" source="南朝齐 · 乐府" op={op} p={p} />}</Cue>
+  </>);
+};
+
+const SceneQiujin = () => {
+  const op = useSceneFade('qiujin', 0.6, 0.45);
+  return (<>
+    <Kicker place="秋瑾墓" sub="秋风秋雨 · 巾帼归处" op={op} />
+    <VPoem op={op} lines={[
+      { text: '秋风秋雨', cue: 'juebi', size: 76 },
+      { text: '愁煞人', cue: 'juebi', size: 76 },
+    ]} />
+    <Cue id="juebi">{(t, p) => <Seal author="秋瑾" source="相传绝笔 · 清" op={op} p={p} left="68%" />}</Cue>
+  </>);
+};
+
+const SceneShouwei = () => {
+  const op = useSceneFade('shouwei', 0.5, 0.6);
+  return (
+    <Cue id="end">{(t, p) => (
+      <div style={{ position: 'absolute', top: 200, left: 0, right: 0, textAlign: 'center', opacity: op }}>
+        <div style={{ fontFamily: F.display, fontSize: 40, fontWeight: 500, color: C.inkSoft, letterSpacing: '0.5em' }}>南朝 · 唐 · 北宋 · 清</div>
+        <div style={{ fontFamily: F.body, fontSize: 22, color: C.inkMute, letterSpacing: '0.18em', marginTop: 24, opacity: p }}>一道平堤，走了一千四百年</div>
+        <div style={{ marginTop: 60, opacity: p, transform: `translateY(${(1-p)*18}px)` }}>
+          <div style={{ fontFamily: F.display, fontSize: 96, fontWeight: 700, color: C.ink, letterSpacing: '0.2em' }}>走到诗里</div>
+        </div>
+      </div>
+    )}</Cue>
+  );
+};
+
+// ════════════════ 字幕 (B站风 · 宣纸深墨) ════════════════
+function visualLen(s) { let n = 0; for (const ch of s) n += /[a-zA-Z0-9 .,'":;\-]/.test(ch) ? 0.5 : 1; return n; }
+function splitChunkToLines(text, maxLen = 13) {
+  const lines = []; const sentences = []; let buf = '';
+  for (const ch of text) { buf += ch; if ('。！？\n'.includes(ch)) { if (buf.trim()) sentences.push(buf.trim()); buf = ''; } }
+  if (buf.trim()) sentences.push(buf.trim());
+  for (const sent of sentences) {
+    if (visualLen(sent) <= maxLen) { lines.push(sent); continue; }
+    const parts = []; let pbuf = '';
+    for (const ch of sent) { pbuf += ch; if ('，、；：'.includes(ch)) { parts.push(pbuf); pbuf = ''; } }
+    if (pbuf) parts.push(pbuf);
+    let merged = '';
+    for (const p of parts) { if (visualLen(merged) + visualLen(p) <= maxLen) merged += p; else { if (merged) lines.push(merged); merged = p; } }
+    if (merged) {
+      if (visualLen(merged) <= maxLen) lines.push(merged);
+      else { let hbuf = ''; for (const ch of merged) { hbuf += ch; if (visualLen(hbuf) >= maxLen) { lines.push(hbuf); hbuf = ''; } } if (hbuf) lines.push(hbuf); }
+    }
+  }
+  return lines.filter(l => l.trim());
+}
+const Subtitles = () => {
+  const { time, scene } = useNarration();
+  if (!scene || !scene.chunks) return null;
+  const active = scene.chunks.find(c => time >= c.absoluteStart && time < c.absoluteEnd);
+  if (!active) return null;
+  const lines = splitChunkToLines(active.text);
+  if (lines.length === 0) return null;
+  const totalLen = lines.reduce((s, l) => s + visualLen(l), 0);
+  const chunkDur = active.absoluteEnd - active.absoluteStart;
+  let acc = active.absoluteStart; let activeLine = lines[lines.length - 1]; let lineStart = active.absoluteStart;
+  for (const line of lines) { const dur = (visualLen(line) / totalLen) * chunkDur; if (time < acc + dur) { activeLine = line; lineStart = acc; break; } acc += dur; }
+  const lineProg = Math.min(1, (time - lineStart) / 0.15);
+  return (
+    <div style={{ position: 'absolute', left: 0, right: 0, bottom: 70, display: 'flex', justifyContent: 'center', pointerEvents: 'none', zIndex: 50 }}>
+      <div key={lineStart} style={{
+        fontFamily: '"PingFang SC", "Noto Sans SC", sans-serif', fontSize: 32, fontWeight: 500, color: C.ink,
+        letterSpacing: '0.05em', lineHeight: 1.2, textAlign: 'center',
+        textShadow: '0 0 6px rgba(241,232,214,0.95), 0 0 12px rgba(241,232,214,0.7), 0 1px 2px rgba(255,255,255,0.5)',
+        opacity: lineProg, transform: `translateY(${(1 - lineProg) * 4}px)`,
+      }}>{activeLine}</div>
+    </div>
+  );
+};
+
+// ════════════════ App ════════════════
+const App = () => (
+  <NarrationStage timeline={TIMELINE} audioSrc="_narration/voiceover.mp3" width={1920} height={1080} background={C.paper}>
+    <PaperBg />
+    <HeroDike />
+    <YearBadge />
+    <SceneKaichang />
+    <SceneDuanqiao />
+    <SceneBaidi />
+    <ScenePinghu />
+    <SceneFanghe />
+    <SceneXiling />
+    <SceneQiujin />
+    <SceneShouwei />
+    <Subtitles />
+    <div style={{ position: 'absolute', bottom: 22, right: 34, fontSize: 12, color: 'rgba(43,38,32,0.32)', letterSpacing: '0.22em', fontFamily: F.body, pointerEvents: 'none' }}>诗径 · 走到诗里</div>
+  </NarrationStage>
+);
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
