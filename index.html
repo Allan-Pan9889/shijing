@@ -30,6 +30,19 @@
     border:1px solid #d3c5a6;border-radius:20px;cursor:pointer;background:transparent;
     font-family:inherit;transition:.2s;white-space:nowrap;}
   .trailbar .tab.on{background:var(--jade);color:var(--paper);border-color:var(--jade);}
+  /* 城市开篇横幅 */
+  .prologue-bar{margin-top:9px;display:inline-flex;align-items:center;gap:7px;cursor:pointer;
+    font-size:11.5px;letter-spacing:2px;color:#8a6d3b;padding:4px 14px;border-radius:20px;
+    background:linear-gradient(90deg,#f3ead4,#efe3c6);border:1px solid #d9c79b;transition:.2s;}
+  .prologue-bar:hover{background:#ecdfbe;}
+  .prologue-bar::before{content:"☰";font-size:12px;opacity:.7;}
+  /* 城市开篇卡片内的声部 */
+  .voice-intro{font-size:13px;line-height:1.95;color:#6b5f47;text-align:center;
+    margin:2px 14px 18px;font-style:italic;}
+  .voice{margin:0 2px 22px;padding-top:16px;border-top:1px dashed #d8cba8;}
+  .voice:first-of-type{border-top:none;padding-top:4px;}
+  .voice .vlabel{display:inline-block;font-size:11px;letter-spacing:3px;color:var(--paper);
+    background:var(--jade);padding:2px 12px;border-radius:12px;margin-bottom:12px;}
 
   /* 地图区(真实地图 · 淡雅水墨底图) */
   #map{flex:1;position:relative;overflow:hidden;background:var(--paper2);}
@@ -53,6 +66,10 @@
   @keyframes ping{0%{transform:scale(1);opacity:.5;}100%{transform:scale(4.5);opacity:0;}}
   .pin .label{position:absolute;left:12px;top:-13px;white-space:nowrap;
     text-shadow:0 1px 2px #f4efe4,0 0 3px #f4efe4;}
+  /* 标签避让:重叠时翻转方向(JS dodgeLabels 控制) */
+  .pin.lbl-down .label{top:10px;}
+  .pin.lbl-left .label{left:auto;right:12px;text-align:right;}
+  .pin.lbl-left.lbl-down .label{top:10px;}
   .pin .label .nm{font-size:12px;color:var(--ink);font-weight:600;display:block;line-height:1.2;}
   .pin .label .er{font-size:9px;color:var(--gold);letter-spacing:.5px;display:block;}
   /* 坐标可信度：待测点(estimate)用空心虚线圈 + 波浪角标；已证点(osm/field)保持实心 */
@@ -210,6 +227,7 @@
     <h1>诗径<span class="slogan">走到诗里</span></h1>
     <div class="sub" id="trailSub">古龙井 · 风篁岭诗径</div>
     <div class="trailbar" id="trailbar"></div>
+    <div class="prologue-bar" id="prologueBar" style="display:none" onclick="showPrologue()"></div>
   </header>
 
   <div id="map">
@@ -349,10 +367,13 @@ function buildMap(){
   if(trailLine){lmap.removeLayer(trailLine);trailLine=null;}
   if(walkerMarker){lmap.removeLayer(walkerMarker);walkerMarker=null;}
 
-  // 诗径连线(高德显示坐标 + Catmull-Rom 平滑成自然弧线)
+  // 诗径连线:trail 模式画 Catmull-Rom 平滑弧线;scatter 模式各点独立、不连线
   const latlngs=pts.map(p=>gpt(p));
-  const smooth = latlngs.length>=3 ? catmullRom(latlngs, 16) : latlngs;
-  trailLine=L.polyline(smooth,{className:'trail-line'}).addTo(lmap);
+  const isScatter = DATA.meta && DATA.meta.layout==='scatter';
+  if(!isScatter){
+    const smooth = latlngs.length>=3 ? catmullRom(latlngs, 16) : latlngs;
+    trailLine=L.polyline(smooth,{className:'trail-line'}).addTo(lmap);
+  }
 
   // 点位标记
   pts.forEach((p,i)=>{
@@ -370,6 +391,37 @@ function buildMap(){
   lmap.fitBounds(latlngs, {padding:[55,55], maxZoom:16});
   setTimeout(()=>lmap.invalidateSize(),120); // 修正容器尺寸
   window.lmap=lmap; window.markers=markers; // 暴露便于调试/校准
+  // 标签避让:首次渲染后 + 每次缩放/平移结束后重算(点间像素距离会变)
+  setTimeout(dodgeLabels,260);
+  lmap.off('zoomend moveend', dodgeLabels);
+  lmap.on('zoomend moveend', dodgeLabels);
+}
+
+// 标签避让:贪心翻转,重叠的标签依次尝试 上右→下右→上左→下左,选第一个不撞的方位
+function dodgeLabels(){
+  if(!markers.length) return;
+  const pins=markers.map((m,i)=>m._icon?m._icon.querySelector('.pin'):null);
+  // 复位所有方向类
+  pins.forEach(p=>{if(p)p.classList.remove('lbl-down','lbl-left');});
+  const dirs=[['',''],['lbl-down',''],['','lbl-left'],['lbl-down','lbl-left']];
+  const boxes=[]; // 已定位标签的屏幕包围盒
+  const rectOf=lbl=>{const r=lbl.getBoundingClientRect();return {l:r.left,t:r.top,r:r.right,b:r.bottom};};
+  const hit=(a,b)=>!(a.r<b.l||a.l>b.r||a.b<b.t||a.t>b.b);
+  pins.forEach(pin=>{
+    if(!pin)return;
+    const lbl=pin.querySelector('.label'); if(!lbl)return;
+    let placed=null;
+    for(const [d1,d2] of dirs){
+      pin.classList.remove('lbl-down','lbl-left');
+      if(d1)pin.classList.add(d1); if(d2)pin.classList.add(d2);
+      const box=rectOf(lbl);
+      if(!boxes.some(b=>hit(box,b))){placed=box;break;}
+    }
+    if(!placed){ // 四个方位都撞,保留最后一个(下左),仍记录
+      placed=rectOf(lbl);
+    }
+    boxes.push(placed);
+  });
 }
 
 function pinEl(i){const m=markers[i]; return m&&m._icon?m._icon.querySelector('.pin'):null;}
@@ -464,12 +516,29 @@ function zoomImg(src){
   lb.classList.add('show');
 }
 
-// 模拟漫步:沿点位插值前进
+// 模拟漫步:trail 模式沿点位插值前进;scatter 模式逐点跳转游览
 function simulateWalk(){
   if(walking) return;
-  walking=true;walkIdx=0;
-  const btn=document.getElementById('walkBtn');btn.textContent='漫步中…';
   const pts=DATA.points;
+  const isScatter = DATA.meta && DATA.meta.layout==='scatter';
+  const btn=document.getElementById('walkBtn');
+  if(isScatter){
+    // 散点:不连线,依次"瞬移"到每个诗签并触发(模拟实地走到各处)
+    walking=true; let k=0;
+    visited=new Set([...visited].filter(v=>!v.endsWith('_open')));
+    btn.textContent='游览中…';
+    const timer=setInterval(()=>{
+      if(k>=pts.length){clearInterval(timer);walking=false;btn.textContent='重新游览';return;}
+      const p=pts[k];
+      moveWalker(p.lat,p.lng);
+      if(lmap) lmap.panTo(gpt(p),{animate:true,duration:.6});
+      arrive(k,true);
+      k++;
+    },2600);
+    return;
+  }
+  walking=true;walkIdx=0;
+  btn.textContent='漫步中…';
   let seg=0,t=0;
   const timer=setInterval(()=>{
     if(seg>=pts.length-1){
@@ -509,8 +578,11 @@ document.getElementById('gpsBtn').onclick=realGPS;
 
 // 多条诗径
 const TRAILS=[
-  {file:'data/poems.json',        sub:'古龙井 · 风篁岭诗径'},
-  {file:'data/trail-gushan.json', sub:'孤山 · 白堤诗径'}
+  {file:'data/poems.json',            sub:'古龙井 · 风篁岭诗径'},
+  {file:'data/trail-gushan.json',     sub:'孤山 · 白堤诗径'},
+  {file:'data/trail-lingyin.json',    sub:'灵隐 · 天竺诗径'},
+  {file:'data/trail-qiantang.json',   sub:'钱塘江畔诗径'},
+  {file:'data/trail-xihu-scatter.json', sub:'西湖 · 名胜诗签'}
 ];
 let curTrail=0;
 
@@ -535,11 +607,42 @@ function loadTrail(){
   fetch(t.file).then(r=>r.json()).then(d=>{
     DATA=d;
     document.getElementById('trailSub').textContent=(d.meta&&d.meta.trail_name)?d.meta.trail_name.replace(/^诗径\s*·\s*/,''):t.sub;
+    // 城市开篇三声部:有 prologue 则显示横幅
+    const pb=document.getElementById('prologueBar');
+    if(d.meta && d.meta.prologue){
+      pb.textContent=d.meta.prologue.title||'城市开篇';
+      pb.style.display='inline-flex';
+    }else{ pb.style.display='none'; }
     buildMap();
-    document.getElementById('hint').textContent='点「模拟漫步」沿径前行，或「真实定位」实地体验';
+    document.getElementById('hint').textContent=(d.meta&&d.meta.layout==='scatter')
+      ? '诗签散落湖山各处 · 点「模拟漫步」逐签游览，或「真实定位」走到即现'
+      : '点「模拟漫步」沿径前行，或「真实定位」实地体验';
   }).catch(e=>{document.getElementById('hint').textContent='数据加载失败:'+e;});
 }
 loadTrail();
+
+// 城市开篇 · 三声部:复用 overlay 卡片,渲染 prologue
+function showPrologue(){
+  if(!DATA||!DATA.meta||!DATA.meta.prologue) return;
+  const pr=DATA.meta.prologue;
+  const c=document.getElementById('card');
+  const voices=(pr.voices||[]).map(po=>`
+    <div class="voice">
+      ${po.voice?`<div class="vlabel">${po.voice}</div>`:''}
+      <div class="verse">${po.text}</div>
+      <div class="meta">——〔${po.dynasty}〕${po.author}《${po.source.replace(/[《》]/g,'')}》
+        <span class="badge ${po.credit}">${({A:'确切',B:'相关',C:'意境'})[po.credit]}</span></div>
+      <div class="vern">${po.vernacular}</div>
+      <div class="anno"><b>考据 · </b>${po.annotation}</div>
+      ${po.ref?`<div class="ref">出处 · ${po.ref}</div>`:''}
+    </div>`).join('');
+  c.innerHTML=`<div class="grip"></div>
+    <div class="place">${pr.title||'城市开篇'}<span class="sub">三声部 · 一座城的序词</span></div>
+    ${pr.intro?`<div class="voice-intro">${pr.intro}</div>`:''}
+    ${voices}
+    <button class="close" onclick="hideCard()">收 起</button>`;
+  document.getElementById('overlay').classList.add('show');
+}
 
 /* ===== 卡片内实地校准(从 survey.html 内联核心能力) ===== */
 let cpWatch=null, cpSamples=[], cpPoint=null, cpFixMarker=null, cpFix=null, cpFieldObj=null;
