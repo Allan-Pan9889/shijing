@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>诗径 · 扫码上路</title>
+<style>
+  :root{
+    --ink:#2b2620; --paper:#f4efe4; --paper2:#ece4d4;
+    --gold:#9a7b3f; --jade:#5a7d6a; --red:#9e4b3f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:"Songti SC","STSong","Noto Serif SC",serif;
+    background:var(--paper);color:var(--ink);
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:32px 20px;
+  }
+  .card{
+    max-width:520px;width:100%;background:#fbf8f0;
+    border:1px solid #e0d6c2;border-radius:18px;
+    box-shadow:0 12px 40px rgba(40,30,15,.12);
+    padding:40px 36px 32px;text-align:center;
+  }
+  .brand{font-size:13px;letter-spacing:.4em;color:var(--gold);margin-bottom:6px;}
+  h1{font-size:42px;letter-spacing:.18em;font-weight:800;margin-bottom:8px;}
+  .slogan{font-size:16px;color:#7a6f5d;letter-spacing:.25em;margin-bottom:4px;}
+  .rule{width:48px;height:3px;background:var(--red);margin:20px auto 24px;border-radius:2px;}
+  .qr-wrap{
+    display:inline-block;padding:16px;background:var(--paper);
+    border:2px solid var(--red);border-radius:16px;margin-bottom:8px;
+  }
+  .qr-wrap img{width:240px;height:240px;display:block;}
+  .scan-tip{font-size:14px;color:#8a7d68;margin-bottom:28px;}
+  .url{
+    display:inline-block;font-family:ui-monospace,Menlo,monospace;
+    font-size:13px;color:var(--red);background:var(--paper2);
+    padding:7px 14px;border-radius:8px;margin-bottom:28px;word-break:break-all;
+  }
+  .steps{text-align:left;background:var(--paper);border-radius:12px;
+    padding:20px 22px;margin-bottom:20px;}
+  .steps h2{font-size:15px;color:var(--jade);letter-spacing:.1em;margin-bottom:12px;
+    border-left:3px solid var(--jade);padding-left:10px;}
+  .steps ol{margin-left:20px;}
+  .steps li{font-size:14.5px;line-height:1.9;color:#3d362b;}
+  .steps b{color:var(--red);}
+  .field-tip{
+    background:#f6ede2;border:1px dashed var(--gold);border-radius:12px;
+    padding:16px 18px;text-align:left;font-size:13.5px;line-height:1.8;color:#5d5340;
+  }
+  .field-tip .t{font-size:14px;color:var(--gold);font-weight:700;
+    letter-spacing:.08em;margin-bottom:8px;}
+  .foot{margin-top:22px;font-size:12px;color:#a89b84;letter-spacing:.1em;}
+  @media print{
+    body{background:#fff;}
+    .card{box-shadow:none;border-color:#ccc;}
+    .field-tip{break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">此地曾有 · 一款地理诗词漫步</div>
+    <h1>诗　径</h1>
+    <div class="slogan">走 到 诗 里</div>
+    <div class="rule"></div>
+
+    <div class="qr-wrap">
+      <img src="qr-shijing.png" alt="诗径 二维码">
+    </div>
+    <div class="scan-tip">用 iPhone 相机扫码 · 直达诗径</div>
+    <div class="url">https://allan-pan9889.github.io/shijing/</div>
+
+    <div class="steps">
+      <h2>装到主屏幕（像 App 一样用）</h2>
+      <ol>
+        <li>用 <b>Safari</b> 打开上面的网址</li>
+        <li>点底部<b>分享按钮</b>（方框向上箭头）</li>
+        <li>下滑选「<b>添加到主屏幕</b>」</li>
+        <li>主屏出现红色印章「诗径」图标，点开即全屏</li>
+      </ol>
+    </div>
+
+    <div class="steps">
+      <h2>实地体验</h2>
+      <ol>
+        <li>进 App 选好诗径（如「风篁岭诗径」）</li>
+        <li>点「<b>真实定位</b>」，授权选「<b>使用 App 期间允许</b>」</li>
+        <li>走近点位（约 50 米内），诗句自动浮现</li>
+      </ol>
+    </div>
+
+    <div class="field-tip">
+      <div class="t">⚠ 进山前必做</div>
+      出发前在<b>有信号处先打开 App 一次</b>，把目标诗径切一遍、地图缩放浏览一遍——
+      让离线缓存就位。这样进山没信号也能照常触发诗句与地图。
+    </div>
+
+    <div class="foot">NOUS · 诗径测试版 · 实地反馈请记下「哪点触发距离不对 / 哪首诗对不上眼前景」</div>
+  </div>
+</body>
+</html>
