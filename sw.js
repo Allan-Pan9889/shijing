@@ -1,5 +1,5 @@
 /* 诗径 PWA Service Worker — 离线缓存(山里信号差是刚需) */
-const CACHE = 'shijing-v1';
+const CACHE = 'shijing-v2';
 
 /* App 壳 + 数据 + 地图库 + 图标,首次访问即预缓存 */
 const CORE = [
