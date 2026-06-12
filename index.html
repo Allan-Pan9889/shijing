@@ -127,17 +127,22 @@
   .overlay.show{opacity:1;pointer-events:auto;}
   .card{width:100%;max-width:480px;background:var(--paper);border-radius:22px 22px 0 0;
     padding:22px 24px calc(26px + env(safe-area-inset-bottom));transform:translateY(40px);
-    transition:.4s;box-shadow:0 -6px 30px rgba(0,0,0,.3);max-height:86dvh;overflow-y:auto;}
+    transition:.4s;box-shadow:0 -6px 30px rgba(0,0,0,.3);max-height:86dvh;overflow-y:auto;position:relative;}
   .overlay.show .card{transform:translateY(0);}
+  /* 右上角关闭键(不遮挡正文) */
+  .card .xclose{position:absolute;top:14px;right:16px;width:32px;height:32px;border:none;
+    border-radius:50%;background:rgba(120,105,75,.1);color:#8a7d63;font-size:18px;line-height:1;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3;transition:.2s;}
+  .card .xclose:hover{background:rgba(120,105,75,.2);color:var(--ink);}
   .card .grip{width:42px;height:4px;border-radius:3px;background:#cdbf9f;margin:0 auto 16px;}
-  .card .place{text-align:center;font-size:13px;color:var(--jade);letter-spacing:3px;}
-  .card .place .sub{display:block;font-size:11px;color:#a99b7d;margin-top:3px;letter-spacing:1px;}
+  .card .place{text-align:center;font-size:23px;font-weight:700;color:var(--ink);letter-spacing:4px;}
+  .card .place .sub{display:block;font-size:12px;font-weight:400;color:var(--jade);margin-top:6px;letter-spacing:2px;}
   /* 时空标尺 */
   .timescale{margin:18px 0 6px;text-align:center;}
   .timescale .ts-row{display:flex;align-items:center;justify-content:center;gap:14px;}
-  .timescale .ts-year{font-size:54px;line-height:1;font-weight:700;color:var(--ink);
-    letter-spacing:2px;font-family:Georgia,"Songti SC",serif;}
-  .timescale .ts-suffix{font-size:20px;font-weight:400;color:#a99b7d;margin-left:2px;}
+  .timescale .ts-year{font-size:40px;line-height:1;font-weight:700;color:var(--ink);
+    letter-spacing:1px;font-family:Georgia,"Songti SC",serif;}
+  .timescale .ts-suffix{font-size:16px;font-weight:400;color:#a99b7d;margin-left:2px;}
   .timescale .ts-era{text-align:left;font-size:15px;color:var(--jade);line-height:1.5;letter-spacing:1px;}
   .timescale .ts-era2{font-size:12px;color:#a99b7d;letter-spacing:1px;}
   .timescale .ts-gap{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;}
@@ -163,7 +168,8 @@
     box-shadow:0 2px 10px rgba(40,30,15,.22);background:#e9e0cc;}
   .poem .relic-img figcaption{text-align:center;font-size:11px;color:#a99b7d;
     margin-top:6px;letter-spacing:1px;}
-  .poem .meta{text-align:center;font-size:12px;color:var(--gold);margin-top:10px;letter-spacing:1px;}
+  .poem .meta{text-align:center;font-size:13.5px;color:var(--ink);font-weight:600;margin-top:10px;letter-spacing:.5px;}
+  .poem .meta .author{color:var(--red);}
   .poem .badge{display:inline-block;font-size:10px;padding:1px 7px;border-radius:10px;
     margin-left:6px;vertical-align:middle;letter-spacing:0;}
   .badge.A{background:#e3efe6;color:#3c6b50;}
@@ -174,10 +180,10 @@
   .poem .anno{font-size:12px;line-height:1.8;color:#8a7d63;margin-top:10px;}
   .poem .anno b{color:var(--jade);font-weight:600;}
   .poem .ref{font-size:11px;line-height:1.7;color:#a99b7d;margin-top:7px;font-style:normal;}
-  .close{position:sticky;bottom:-2px;display:block;width:100%;margin-top:22px;padding:13px;border:none;
-    background:var(--ink);color:var(--paper);border-radius:30px;font-family:inherit;
-    font-size:14px;letter-spacing:3px;cursor:pointer;
-    box-shadow:0 -14px 18px -6px var(--paper);}
+  .close{display:block;width:auto;margin:26px auto 4px;padding:10px 36px;border:1px solid #cdbf9f;
+    background:transparent;color:#8a7d63;border-radius:30px;font-family:inherit;
+    font-size:13px;letter-spacing:3px;cursor:pointer;transition:.2s;}
+  .close:hover{background:rgba(120,105,75,.08);color:var(--ink);}
   /* 卡片内实地校准 */
   .calib-row{margin-top:18px;text-align:center;}
   .calib{font-family:inherit;font-size:12.5px;letter-spacing:1px;padding:9px 16px;cursor:pointer;
@@ -262,6 +268,7 @@
 <div class="overlay" id="overlay">
   <div class="card" id="card"></div>
 </div>
+<audio id="bgm" src="assets/bgm-liushui.mp3" loop preload="auto"></audio>
 
 <!-- 卡片内实地校准面板 -->
 <div id="calib">
@@ -484,7 +491,7 @@ function showCard(p){
     <div class="poem">
       ${po.preface?`<div class="preface">${po.preface}</div>`:''}
       <div class="verse">${po.text}</div>
-      <div class="meta">——〔${po.dynasty}〕${po.author}《${po.source.replace(/[《》]/g,'')}》
+      <div class="meta">——〔${po.dynasty}〕<span class="author">${po.author}</span>《${po.source.replace(/[《》]/g,'')}》
         <span class="badge ${po.credit}">${({A:'确切',B:'相关',C:'意境'})[po.credit]}</span></div>
       ${po.date?`<div class="date">${po.date}</div>`:''}
       ${po.relic_image?`<figure class="relic-img" onclick="zoomImg('${po.relic_image}')">
@@ -495,7 +502,8 @@ function showCard(p){
       ${po.relic?`<div class="relic">🖌 ${po.relic}</div>`:''}
       ${po.ref?`<div class="ref">出处 · ${po.ref}</div>`:''}
     </div>`).join('');
-  c.innerHTML=`<div class="grip"></div>
+  c.innerHTML=`<button class="xclose" onclick="hideCard()" aria-label="关闭">✕</button>
+    <div class="grip"></div>
     <div class="place">${p.name}<span class="sub">${p.subtitle}</span></div>
     ${p.year?`<div class="timescale">
       <div class="ts-row">
@@ -513,9 +521,26 @@ function showCard(p){
     </div>
     <button class="close" onclick="hideCard()">收 起</button>`;
   document.getElementById('overlay').classList.add('show');
+  playBgm();
 }
-function hideCard(){document.getElementById('overlay').classList.remove('show');}
+function hideCard(){document.getElementById('overlay').classList.remove('show');stopBgm();}
 document.getElementById('overlay').onclick=e=>{if(e.target.id==='overlay')hideCard();};
+
+// 背景音乐:弹卡淡入、收起淡出(流水古琴 bgm-liushui.mp3)
+let bgmFade=null;
+function playBgm(){
+  const a=document.getElementById('bgm');if(!a)return;
+  clearInterval(bgmFade);
+  a.volume=0;
+  const p=a.play();
+  if(p&&p.catch)p.catch(()=>{}); // 首次需用户手势,触点弹卡即满足
+  let v=0;bgmFade=setInterval(()=>{v=Math.min(.45,v+.03);a.volume=v;if(v>=.45)clearInterval(bgmFade);},60);
+}
+function stopBgm(){
+  const a=document.getElementById('bgm');if(!a)return;
+  clearInterval(bgmFade);
+  let v=a.volume;bgmFade=setInterval(()=>{v=Math.max(0,v-.04);a.volume=v;if(v<=0){clearInterval(bgmFade);a.pause();}},50);
+}
 
 // 真迹放大灯箱(支持横向看长卷)
 function zoomImg(src){
@@ -644,18 +669,20 @@ function showPrologue(){
     <div class="voice">
       ${po.voice?`<div class="vlabel">${po.voice}</div>`:''}
       <div class="verse">${po.text}</div>
-      <div class="meta">——〔${po.dynasty}〕${po.author}《${po.source.replace(/[《》]/g,'')}》
+      <div class="meta">——〔${po.dynasty}〕<span class="author">${po.author}</span>《${po.source.replace(/[《》]/g,'')}》
         <span class="badge ${po.credit}">${({A:'确切',B:'相关',C:'意境'})[po.credit]}</span></div>
       <div class="vern">${po.vernacular}</div>
       <div class="anno"><b>考据 · </b>${po.annotation}</div>
       ${po.ref?`<div class="ref">出处 · ${po.ref}</div>`:''}
     </div>`).join('');
-  c.innerHTML=`<div class="grip"></div>
+  c.innerHTML=`<button class="xclose" onclick="hideCard()" aria-label="关闭">✕</button>
+    <div class="grip"></div>
     <div class="place">${pr.title||'城市开篇'}<span class="sub">三声部 · 一座城的序词</span></div>
     ${pr.intro?`<div class="voice-intro">${pr.intro}</div>`:''}
     ${voices}
     <button class="close" onclick="hideCard()">收 起</button>`;
   document.getElementById('overlay').classList.add('show');
+  playBgm();
 }
 
 /* ===== 卡片内实地校准(从 survey.html 内联核心能力) ===== */

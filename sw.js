@@ -1,5 +1,5 @@
 /* 诗径 PWA Service Worker — 离线缓存(山里信号差是刚需) */
-const CACHE = 'shijing-v2';
+const CACHE = 'shijing-v3';
 
 /* App 壳 + 数据 + 地图库 + 图标,首次访问即预缓存 */
 const CORE = [
@@ -14,6 +14,7 @@ const CORE = [
   './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './assets/bgm-liushui.mp3',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
