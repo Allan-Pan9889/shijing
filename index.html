@@ -119,6 +119,15 @@
     font-size:11px;color:#8a7d63;background:rgba(244,239,228,.85);
     padding:4px 12px;border-radius:20px;letter-spacing:1px;white-space:nowrap;
     box-shadow:0 1px 4px var(--shadow);}
+  /* 接近预告浮条:走近点位时从底部升起 */
+  #approach{position:absolute;left:50%;bottom:18px;transform:translateX(-50%) translateY(20px);
+    z-index:700;background:linear-gradient(135deg,#9e4b3f,#7d3a30);color:#f4efe4;
+    padding:11px 20px;border-radius:26px;font-size:14px;letter-spacing:1.5px;white-space:nowrap;
+    box-shadow:0 4px 16px rgba(80,30,20,.35);opacity:0;pointer-events:none;transition:.4s;
+    display:flex;align-items:center;gap:9px;}
+  #approach.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  #approach .ap-arrow{font-size:16px;}
+  #approach .ap-dist{font-weight:700;color:#ffd9a0;}
 
   /* 诗句弹层 */
   .overlay{position:fixed;inset:0;background:rgba(30,24,14,.55);backdrop-filter:blur(3px);
@@ -251,6 +260,7 @@
 
   <div id="map">
     <div class="hint" id="hint">点「模拟漫步」沿径前行，或「真实定位」实地体验</div>
+    <div id="approach"></div>
     <div id="leaflet"></div>
     <div id="legend">
       <div class="li"><span class="sw ok"></span>坐标已核验</div>
@@ -315,7 +325,10 @@
 
 <script>
 let DATA=null, walking=false, walkIdx=-1, watchId=null, visited=new Set();
+let approached=new Set(); // 已预告过的点(避免反复震动)
+let wakeLock=null;        // 屏幕常亮锁
 const TRIGGER_FACTOR=1.0; // 进入 radius 内触发
+const APPROACH_FACTOR=1.8; // 预告区:radius~radius*1.8 之间提前预告
 const NOW_YEAR=new Date().getFullYear(); // 用于实时计算"距今"年差
 
 // Leaflet 地图对象
@@ -458,14 +471,42 @@ function moveWalker(lat,lng){
   }
 }
 
-// 检查是否进入任一围栏
+// 检查是否进入任一围栏(含接近预告)
 function checkGeofence(lat,lng){
-  let best=-1,bestD=1e9;
+  let best=-1,bestD=1e9;          // 进入触发圈的最近点
+  let near=-1,nearD=1e9;          // 进入预告圈(未进触发圈)的最近点
   DATA.points.forEach((p,i)=>{
     const dist=haversine(lat,lng,p.lat,p.lng);
-    if(dist<p.radius*TRIGGER_FACTOR && dist<bestD){best=i;bestD=dist;}
+    if(dist<p.radius*TRIGGER_FACTOR){ if(dist<bestD){best=i;bestD=dist;} }
+    else if(dist<p.radius*APPROACH_FACTOR){ if(dist<nearD){near=i;nearD=dist;} }
   });
-  if(best>=0 && !visited.has(best+"_open")) arrive(best,false);
+  if(best>=0){
+    hideApproach();
+    if(!visited.has(best+"_open")) arrive(best,false);
+    return;
+  }
+  // 未进任何触发圈:若有点位在预告圈内,显示预告
+  if(near>=0 && !visited.has(near+"_open")){
+    showApproach(near,nearD);
+  }else{
+    hideApproach();
+  }
+}
+
+// 接近预告:走近(未到)点位时,底部升起提示条 + 首次轻震
+function showApproach(i,dist){
+  const p=DATA.points[i];
+  const el=document.getElementById('approach');
+  el.innerHTML=`<span class="ap-arrow">➜</span>前方 <span class="ap-dist">约 ${Math.round(dist)} 米</span> · ${p.name}`;
+  el.classList.add('show');
+  if(!approached.has(i)){
+    approached.add(i);
+    if(navigator.vibrate) navigator.vibrate(30); // 首次进预告圈轻震一下
+  }
+}
+function hideApproach(){
+  const el=document.getElementById('approach');
+  if(el) el.classList.remove('show');
 }
 
 function arrive(i,manual){
@@ -597,14 +638,29 @@ function simulateWalk(){
   },950);
 }
 
+// 屏幕常亮:实地走时防止自动熄屏(亮屏体验关键)
+async function requestWakeLock(){
+  try{
+    if('wakeLock' in navigator){
+      wakeLock=await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release',()=>{wakeLock=null;});
+    }
+  }catch(e){/* 不支持或被拒,静默 */}
+}
+// 页面重新可见时(如切回 App)重新申请锁
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible' && watchId!==null && !wakeLock) requestWakeLock();
+});
+
 // 真实 GPS
 function realGPS(){
   if(!navigator.geolocation){document.getElementById('hint').textContent='此设备不支持定位';return;}
   document.getElementById('hint').textContent='定位中…(需到现场才会触发诗句)';
+  requestWakeLock(); // 实地走时保持屏幕常亮
   if(watchId)navigator.geolocation.clearWatch(watchId);
   watchId=navigator.geolocation.watchPosition(pos=>{
     const {latitude,longitude}=pos.coords;
-    document.getElementById('hint').textContent='已定位 · 走近点位即触发';
+    document.getElementById('hint').textContent='已定位 · 屏幕常亮 · 走近点位即触发';
     moveWalker(latitude,longitude);
     checkGeofence(latitude,longitude);
   },err=>{
