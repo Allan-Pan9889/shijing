@@ -268,7 +268,7 @@
 <div class="overlay" id="overlay">
   <div class="card" id="card"></div>
 </div>
-<audio id="bgm" src="assets/bgm-liushui.mp3" loop preload="auto"></audio>
+<audio id="bgm" src="assets/bgm-rain.mp3" loop preload="auto"></audio>
 
 <!-- 卡片内实地校准面板 -->
 <div id="calib">
@@ -526,7 +526,7 @@ function showCard(p){
 function hideCard(){document.getElementById('overlay').classList.remove('show');stopBgm();}
 document.getElementById('overlay').onclick=e=>{if(e.target.id==='overlay')hideCard();};
 
-// 背景音乐:弹卡淡入、收起淡出(流水古琴 bgm-liushui.mp3)
+// 背景音乐:弹卡淡入、收起淡出(神秘园《Sometimes When It Rains》bgm-rain.mp3)
 let bgmFade=null;
 function playBgm(){
   const a=document.getElementById('bgm');if(!a)return;
