@@ -2,7 +2,7 @@
   "name": "诗径 · 走到诗里",
   "short_name": "诗径",
   "description": "走到诗里——在杭州的真实山水中,解锁古人在同一处留下的诗词。",
-  "start_url": "./index.html",
+  "start_url": "./index.html?trail=gushan",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
