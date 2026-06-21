@@ -49,13 +49,6 @@
     background:linear-gradient(90deg,#f3ead4,#efe3c6);border:1px solid #d9c79b;transition:.2s;}
   .prologue-bar:hover{background:#ecdfbe;}
   .prologue-bar::before{content:"☰";font-size:12px;opacity:.7;}
-  /* 城市开篇卡片内的声部 */
-  .voice-intro{font-size:13px;line-height:1.95;color:#6b5f47;text-align:center;
-    margin:2px 14px 18px;font-style:italic;}
-  .voice{margin:0 2px 22px;padding-top:16px;border-top:1px dashed #d8cba8;}
-  .voice:first-of-type{border-top:none;padding-top:4px;}
-  .voice .vlabel{display:inline-block;font-size:11px;letter-spacing:3px;color:var(--paper);
-    background:var(--jade);padding:2px 12px;border-radius:12px;margin-bottom:12px;}
 
   /* 地图区(真实地图 · 淡雅水墨底图) */
   #map{flex:1;position:relative;overflow:hidden;background:var(--paper2);}
@@ -580,23 +573,28 @@ function arrive(i,manual){
   showCard(DATA.points[i]);
 }
 
-function showCard(p){
-  const c=document.getElementById('card');
-  let poems=p.poems.map(po=>`
-    <div class="poem">
-      ${po.preface?`<div class="preface">${po.preface}</div>`:''}
+function renderPoemHtml(po){
+  const preface=po.preface||po.voice||'';
+  const creditLbl=({A:'确切',B:'相关',C:'意境'})[po.credit]||'';
+  return `<div class="poem">
+      ${preface?`<div class="preface">${preface}</div>`:''}
       <div class="verse">${po.text}</div>
-      <div class="meta">——〔${po.dynasty}〕<span class="author">${po.author}</span>《${po.source.replace(/[《》]/g,'')}》
-        <span class="badge ${po.credit}">${({A:'确切',B:'相关',C:'意境'})[po.credit]}</span></div>
+      <div class="meta">——〔${po.dynasty}〕<span class="author">${po.author}</span>《${(po.source||'').replace(/[《》]/g,'')}》
+        ${po.credit?`<span class="badge ${po.credit}">${creditLbl}</span>`:''}</div>
       ${po.date?`<div class="date">${po.date}</div>`:''}
       ${po.relic_image?`<figure class="relic-img" onclick="zoomImg('${po.relic_image}')">
-        <img src="${po.relic_image}" alt="苏轼真迹" loading="lazy">
+        <img src="${po.relic_image}" alt="真迹" loading="lazy">
         <figcaption>苏轼亲笔真迹 · 轻触放大</figcaption></figure>`:''}
-      <div class="vern">${po.vernacular}</div>
-      <div class="anno"><b>考据 · </b>${po.annotation}</div>
+      <div class="vern">${po.vernacular||''}</div>
+      <div class="anno"><b>考据 · </b>${po.annotation||''}</div>
       ${po.relic?`<div class="relic">🖌 ${po.relic}</div>`:''}
       ${po.ref?`<div class="ref">出处 · ${po.ref}</div>`:''}
-    </div>`).join('');
+    </div>`;
+}
+
+function showCard(p){
+  const c=document.getElementById('card');
+  const poems=(p.poems||[]).map(renderPoemHtml).join('');
   c.innerHTML=`<button class="xclose" onclick="hideCard()" aria-label="关闭">✕</button>
     <div class="grip"></div>
     <div class="place">${p.name}<span class="sub">${p.subtitle}</span></div>
@@ -871,26 +869,18 @@ loadTrail();
 maybeShowSplash();
 setTimeout(maybePickTrailFromGps, 600);
 
-// 城市开篇 · 三声部:复用 overlay 卡片,渲染 prologue
+// 城市开篇 · 三声部:与点位诗卡同一套 .place / .scene / .poem 结构
 function showPrologue(){
   if(!DATA||!DATA.meta||!DATA.meta.prologue) return;
   const pr=DATA.meta.prologue;
   const c=document.getElementById('card');
-  const voices=(pr.voices||[]).map(po=>`
-    <div class="voice">
-      ${po.voice?`<div class="vlabel">${po.voice}</div>`:''}
-      <div class="verse">${po.text}</div>
-      <div class="meta">——〔${po.dynasty}〕<span class="author">${po.author}</span>《${po.source.replace(/[《》]/g,'')}》
-        <span class="badge ${po.credit}">${({A:'确切',B:'相关',C:'意境'})[po.credit]}</span></div>
-      <div class="vern">${po.vernacular}</div>
-      <div class="anno"><b>考据 · </b>${po.annotation}</div>
-      ${po.ref?`<div class="ref">出处 · ${po.ref}</div>`:''}
-    </div>`).join('');
+  const sub=(DATA.meta.scenic_area||'杭州').replace(/·/g,' · ');
+  const poems=(pr.voices||[]).map(renderPoemHtml).join('');
   c.innerHTML=`<button class="xclose" onclick="hideCard()" aria-label="关闭">✕</button>
     <div class="grip"></div>
-    <div class="place">${pr.title||'城市开篇'}<span class="sub">三声部 · 一座城的序词</span></div>
-    ${pr.intro?`<div class="voice-intro">${pr.intro}</div>`:''}
-    ${voices}
+    <div class="place">${pr.title||'城市开篇'}<span class="sub">${sub} · 序词</span></div>
+    ${pr.intro?`<div class="scene">${pr.intro}</div>`:''}
+    ${poems}
     <button class="close" onclick="hideCard()">收 起</button>`;
   document.getElementById('overlay').classList.add('show');
   playBgm();
